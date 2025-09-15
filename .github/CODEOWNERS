@@ -1,0 +1,17 @@
+# CODEOWNERS file for repository access control
+# https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+
+# Global owners - these users are requested for review when anyone opens a pull request
+* @H-a-r-s-h-a-v-a-r-d-h-a-n-M @d-h-a-n-u-s-h-s @g-a-u-r-a-v-k-o-t-h-a-r-i @F-A-R-H-A-N @Amrutha-PES @VenomBlood1207 @Arpitha035
+
+# Specific file/folder ownership
+# Documentation
+docs/ @H-a-r-s-h-a-v-a-r-d-h-a-n-M @d-h-a-n-u-s-h-s @g-a-u-r-a-v-k-o-t-h-a-r-i @F-A-R-H-A-N @Amrutha-PES @VenomBlood1207 @Arpitha035
+
+# Configuration files
+*.json @H-a-r-s-h-a-v-a-r-d-h-a-n-M @d-h-a-n-u-s-h-s @g-a-u-r-a-v-k-o-t-h-a-r-i @F-A-R-H-A-N @Amrutha-PES @VenomBlood1207 @Arpitha035
+*.yml @H-a-r-s-h-a-v-a-r-d-h-a-n-M @d-h-a-n-u-s-h-s @g-a-u-r-a-v-k-o-t-h-a-r-i @F-A-R-H-A-N @Amrutha-PES @VenomBlood1207 @Arpitha035
+*.yaml @H-a-r-s-h-a-v-a-r-d-h-a-n-M @d-h-a-n-u-s-h-s @g-a-u-r-a-v-k-o-t-h-a-r-i @F-A-R-H-A-N @Amrutha-PES @VenomBlood1207 @Arpitha035
+
+# Student IDs for reference:
+# H-a-r-s-h-a-v-a-r-d-h-a-n-M, d-h-a-n-u-s-h-s, g-a-u-r-a-v-k-o-t-h-a-r-i, F-A-R-H-A-N
