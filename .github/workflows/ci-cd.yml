@@ -41,7 +41,7 @@ jobs:
         run: pytest -v --tb=short
 
   promote:
-    name: Auto PR and merge dev -> main
+    name: Open/Update PR dev -> main
     needs: test
     if: needs.test.result == 'success' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
@@ -51,15 +51,27 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Check PR token
+        id: check_token
+        run: |
+          if [ -n "${{ secrets.PR_TOKEN }}" ]; then
+            echo "has_token=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_token=false" >> "$GITHUB_OUTPUT"
+            echo "PR_TOKEN not set. Skipping PR creation."
+          fi
+
       - name: Authenticate gh
+        if: steps.check_token.outputs.has_token == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PR_TOKEN }}
         run: gh auth status
 
       - name: Find existing PR (dev -> main)
+        if: steps.check_token.outputs.has_token == 'true'
         id: findpr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PR_TOKEN }}
         run: |
           num=$(gh pr list --base main --head dev --state open --json number --jq '.[0].number')
           if [ -n "$num" ]; then
@@ -67,10 +79,10 @@ jobs:
           fi
 
       - name: Create PR if missing
-        if: steps.findpr.outputs.number == ''
+        if: steps.check_token.outputs.has_token == 'true' && steps.findpr.outputs.number == ''
         id: createpr
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.PR_TOKEN }}
         run: |
           url=$(gh pr create \
             --base main \
@@ -81,12 +93,14 @@ jobs:
           num=$(echo "$url" | grep -oE '[0-9]+$' || true)
           echo "number=$num" >> "$GITHUB_OUTPUT"
 
-      - name: Enable auto-merge (squash)
+      - name: Label PR as ready-to-merge
+        if: steps.check_token.outputs.has_token == 'true'
         env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PR_NUMBER: ${{ steps.findpr.outputs.number || steps.createpr.outputs.number }}
+          GH_TOKEN: ${{ secrets.PR_TOKEN }}
         run: |
-          if [ -z "$PR_NUMBER" ]; then
-            PR_NUMBER=$(gh pr list --base main --head dev --state open --json number --jq '.[0].number')
+          PR_NUMBER="${{ steps.findpr.outputs.number }}"
+          if [ -z "$PR_NUMBER" ]; then PR_NUMBER="${{ steps.createpr.outputs.number }}"; fi
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit "$PR_NUMBER" --add-label ready-to-merge || true
+            gh pr comment "$PR_NUMBER" --body "✅ CI succeeded. Marked ready-to-merge."
           fi
-          gh pr merge "$PR_NUMBER" --auto --squash
