@@ -1,14 +1,19 @@
-name: CI / Dev -> Main
+name: CI Dev ➜ Main
 
 on:
   push:
-    branches:
-      - dev
+    branches: [dev]
+  pull_request:
+    branches: [dev, main]
   workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
@@ -19,51 +24,69 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Cache pip
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          cache: 'pip'
 
       - name: Install dependencies
         run: |
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-          if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; fi
+          if [ -f dev-requirements.txt ]; then pip install -r dev-requirements.txt; else pip install pytest pytest-cov; fi
 
-      - name: Run tests
-        run: |
-          pytest -q
+      - name: Run pytest
+        env:
+          PYTHONPATH: ${{ github.workspace }}
+        run: pytest -v --tb=short
 
-  create_pr:
-    name: Create PR to main (without touching dev)
+  promote:
+    name: Auto PR and merge dev -> main
     needs: test
+    if: needs.test.result == 'success' && github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-
-      - name: Create or update PR (dev -> main)
-        id: cpr
-        uses: peter-evans/create-pull-request@v4
         with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          title: "chore: merge dev into main (automated)"
-          body: "Automated PR created after successful CI on dev."
-          base: main
-          branch: ci/${{ github.run_id }}   # ✅ temporary branch (prevents dev overwrite)
-          draft: false
-          commit-message: "chore: automated PR to main"
+          fetch-depth: 0
 
-      - name: Enable auto-merge on PR
-        if: steps.cpr.outputs.pull-request-number != ''
-        uses: peter-evans/enable-pull-request-automerge@v2
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          pull-request-number: ${{ steps.cpr.outputs.pull-request-number }}
-          merge-method: squash
+      - name: Authenticate gh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh auth status
 
+      - name: Find existing PR (dev -> main)
+        id: findpr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          num=$(gh pr list --base main --head dev --state open --json number --jq '.[0].number')
+          if [ -n "$num" ]; then
+            echo "number=$num" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create PR if missing
+        if: steps.findpr.outputs.number == ''
+        id: createpr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          url=$(gh pr create \
+            --base main \
+            --head dev \
+            --title "chore: merge dev into main (automated)" \
+            --body "Automated PR created after successful CI on dev.")
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          num=$(echo "$url" | grep -oE '[0-9]+$' || true)
+          echo "number=$num" >> "$GITHUB_OUTPUT"
+
+      - name: Enable auto-merge (squash)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.findpr.outputs.number || steps.createpr.outputs.number }}
+        run: |
+          if [ -z "$PR_NUMBER" ]; then
+            PR_NUMBER=$(gh pr list --base main --head dev --state open --json number --jq '.[0].number')
+          fi
+          gh pr merge "$PR_NUMBER" --auto --squash
