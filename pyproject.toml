@@ -1,13 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
 [project]
-name = "flask-app"
+name = "change-management-software"
 version = "0.1.0"
-description = "A simple Flask application."
-
+description = "A typical issue management software: create change requests, assign them to engineers, get them resolved, and track them to closure"
 readme = "README.md"
-requires-python = ">=3.10"
-
-[project.dependencies]
-dependencies = "requirements.txt"
+requires-python = ">=3.8"
+dependencies = [
+    "flask>=2.3.0",
+]
 
 [project.optional-dependencies]
-dev-requirements = {file = "dev-requirements.txt"}
+dev = [
+    "pytest>=7.4.0",
+    "pytest-cov>=4.1.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --strict-markers"
