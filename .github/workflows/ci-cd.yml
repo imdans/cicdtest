@@ -1,4 +1,4 @@
-name: CI Dev ➜ Main
+name: CI (Tests only)
 
 on:
   push:
@@ -8,8 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
-  pull-requests: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -39,68 +38,3 @@ jobs:
         env:
           PYTHONPATH: ${{ github.workspace }}
         run: pytest -v --tb=short
-
-  promote:
-    name: Open/Update PR dev -> main
-    needs: test
-    if: needs.test.result == 'success' && github.ref == 'refs/heads/dev'
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Check PR token
-        id: check_token
-        run: |
-          if [ -n "${{ secrets.PR_TOKEN }}" ]; then
-            echo "has_token=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "has_token=false" >> "$GITHUB_OUTPUT"
-            echo "PR_TOKEN not set. Skipping PR creation."
-          fi
-
-      - name: Authenticate gh
-        if: steps.check_token.outputs.has_token == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.PR_TOKEN }}
-        run: gh auth status
-
-      - name: Find existing PR (dev -> main)
-        if: steps.check_token.outputs.has_token == 'true'
-        id: findpr
-        env:
-          GH_TOKEN: ${{ secrets.PR_TOKEN }}
-        run: |
-          num=$(gh pr list --base main --head dev --state open --json number --jq '.[0].number')
-          if [ -n "$num" ]; then
-            echo "number=$num" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create PR if missing
-        if: steps.check_token.outputs.has_token == 'true' && steps.findpr.outputs.number == ''
-        id: createpr
-        env:
-          GH_TOKEN: ${{ secrets.PR_TOKEN }}
-        run: |
-          url=$(gh pr create \
-            --base main \
-            --head dev \
-            --title "chore: merge dev into main (automated)" \
-            --body "Automated PR created after successful CI on dev.")
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          num=$(echo "$url" | grep -oE '[0-9]+$' || true)
-          echo "number=$num" >> "$GITHUB_OUTPUT"
-
-      - name: Label PR as ready-to-merge
-        if: steps.check_token.outputs.has_token == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.PR_TOKEN }}
-        run: |
-          PR_NUMBER="${{ steps.findpr.outputs.number }}"
-          if [ -z "$PR_NUMBER" ]; then PR_NUMBER="${{ steps.createpr.outputs.number }}"; fi
-          if [ -n "$PR_NUMBER" ]; then
-            gh pr edit "$PR_NUMBER" --add-label ready-to-merge || true
-            gh pr comment "$PR_NUMBER" --body "✅ CI succeeded. Marked ready-to-merge."
-          fi
