@@ -57,20 +57,13 @@ This repository contains the source code and documentation for the Change manage
 ## 📁 Project Structure
 
 ```
-PESU_RR_AIML_B_P05_Change_management_software_TheChangeMakers/
-├── src/                 # Source code
-├── docs/               # Documentation
-├── tests/              # Test files
-├── .github/            # GitHub workflows and templates
-├── README.md          # This file
-└── ...
 ```
 
 ## 🛠️ Development Guidelines
 
 ### Branching Strategy
 - `main`: Production-ready code
-- `develop`: Development branch
+- `dev`: Development branch
 - `feature/*`: Feature branches
 - `bugfix/*`: Bug fix branches
 
@@ -84,9 +77,9 @@ Follow conventional commit format:
 - `test:` Test-related changes
 
 ### Code Review Process
-1. Create feature branch from `develop`
+1. Create feature branch from `dev`
 2. Make changes and commit
-3. Create Pull Request to `develop`
+3. Create Pull Request to `dev`
 4. Request review from team members
 5. Merge after approval
 
