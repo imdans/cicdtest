@@ -1,0 +1,176 @@
+{% extends 'base.html' %}
+{% block title %}Audit Logs - CMS{% endblock %}
+
+{% block content %}
+<div class="audit-logs-container">
+    <h2>Audit Logs</h2>
+    <p class="subtitle">Complete audit trail of all system activities</p>
+    
+    <!-- Filters -->
+    <div class="filters" style="background: var(--dark-grey); padding: 15px; border-radius: 5px; margin-bottom: 20px;">
+        <h3>Filter Logs</h3>
+        <form method="GET" action="{{ url_for('audit.view_logs') }}">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">
+                <div>
+                    <label>Event Type:</label>
+                    <input type="text" name="event_type" value="{{ request.args.get('event_type', '') }}" list="event-types" placeholder="e.g., login_success">
+                    <datalist id="event-types">
+                        <option value="login_success">
+                        <option value="login_failed">
+                        <option value="logout">
+                        <option value="mfa_enabled">
+                        <option value="mfa_disabled">
+                        <option value="mfa_verified">
+                        <option value="mfa_failed">
+                        <option value="password_changed">
+                        <option value="account_locked">
+                        <option value="account_unlocked">
+                        <option value="cr_created">
+                        <option value="cr_updated">
+                        <option value="cr_submitted">
+                        <option value="cr_approved">
+                        <option value="cr_rejected">
+                        <option value="cr_implemented">
+                        <option value="cr_closed">
+                        <option value="cr_rolled_back">
+                        <option value="cr_viewed">
+                        <option value="user_created">
+                        <option value="user_updated">
+                        <option value="user_deleted">
+                        <option value="role_changed">
+                        <option value="unauthorized_access">
+                        <option value="permission_denied">
+                    </datalist>
+                </div>
+                <div>
+                    <label>Category:</label>
+                    <input type="text" name="event_category" value="{{ request.args.get('event_category', '') }}" list="categories" placeholder="e.g., authentication">
+                    <datalist id="categories">
+                        <option value="authentication">
+                        <option value="change_request">
+                        <option value="user_management">
+                        <option value="system">
+                        <option value="security">
+                    </datalist>
+                </div>
+                <div>
+                    <label>Username:</label>
+                    <input type="text" name="username" value="{{ request.args.get('username', '') }}" placeholder="Search username">
+                </div>
+                <div>
+                    <label>From Date:</label>
+                    <input type="date" name="date_from" value="{{ request.args.get('date_from', '') }}">
+                </div>
+                <div>
+                    <label>To Date:</label>
+                    <input type="date" name="date_to" value="{{ request.args.get('date_to', '') }}">
+                </div>
+            </div>
+            <div style="margin-top: 10px;">
+                <button type="submit" class="btn btn-primary">Apply Filters</button>
+                <a href="{{ url_for('audit.view_logs') }}" class="btn btn-secondary">Clear Filters</a>
+                <a href="{{ url_for('audit.export_logs') }}{{ '?' + request.query_string.decode() if request.query_string else '' }}" class="btn btn-success">Export to CSV</a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Audit Logs Table -->
+    {% if logs.items %}
+        <div class="table-responsive">
+            <table class="table" style="width: 100%; border-collapse: collapse;">
+                <thead style="background: var(--velvet-black); color: var(--soft-white);">
+                    <tr>
+                        <th>Timestamp</th>
+                        <th>Event</th>
+                        <th>Category</th>
+                        <th>User</th>
+                        <th>IP Address</th>
+                        <th>Description</th>
+                        <th>Status</th>
+                        <th>Details</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for log in logs.items %}
+                    <tr style="border-bottom: 1px solid var(--medium-grey); {% if not log.success %}background: var(--dark-grey);{% endif %}">
+                        <td style="padding: 10px; white-space: nowrap;">
+                            {{ log.timestamp | to_ist }}
+                        </td>
+                        <td style="padding: 10px;">
+                            <span style="font-family: monospace; background: var(--dark-grey); padding: 2px 6px; border-radius: 3px;">
+                                {{ log.event_type }}
+                            </span>
+                        </td>
+                        <td style="padding: 10px;">{{ log.event_category }}</td>
+                        <td style="padding: 10px;">{{ log.username or 'System' }}</td>
+                        <td style="padding: 10px; font-family: monospace;">{{ log.ip_address or 'N/A' }}</td>
+                        <td style="padding: 10px;">{{ log.event_description or 'N/A' }}</td>
+                        <td style="padding: 10px;">
+                            {% if log.success %}
+                                <span class="badge badge-success">Success</span>
+                            {% else %}
+                                <span class="badge badge-danger">Failed</span>
+                            {% endif %}
+                        </td>
+                        <td style="padding: 10px;">
+                            <details>
+                                <summary style="cursor: pointer; color: var(--light-grey);">View</summary>
+                                <div style="margin-top: 10px; background: var(--dark-grey); padding: 10px; border-radius: 3px;">
+                                    <p><strong>Request:</strong> {{ log.request_method or 'N/A' }} {{ log.request_path or 'N/A' }}</p>
+                                    <p><strong>User Agent:</strong> {{ log.user_agent or 'N/A' }}</p>
+                                    {% if log.resource_type %}
+                                    <p><strong>Resource:</strong> {{ log.resource_type }} #{{ log.resource_id }}</p>
+                                    {% endif %}
+                                    {% if log.extra_data %}
+                                    <p><strong>Extra Data:</strong></p>
+                                    <pre style="background: var(--soft-white); padding: 5px; overflow-x: auto;">{{ log.extra_data | tojson(indent=2) }}</pre>
+                                    {% endif %}
+                                </div>
+                            </details>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        <div class="pagination" style="margin-top: 20px; text-align: center;">
+            {% if logs.has_prev %}
+                <a href="{{ url_for('audit.view_logs', page=logs.prev_num) }}" class="btn btn-secondary">← Previous</a>
+            {% endif %}
+            
+            <span style="margin: 0 15px;">Page {{ logs.page }} of {{ logs.pages }} ({{ logs.total }} total logs)</span>
+            
+            {% if logs.has_next %}
+                <a href="{{ url_for('audit.view_logs', page=logs.next_num) }}" class="btn btn-secondary">Next →</a>
+            {% endif %}
+        </div>
+    {% else %}
+        <div class="no-logs" style="text-align: center; padding: 40px; background: var(--dark-grey); border-radius: 5px;">
+            <p style="font-size: 18px; color: var(--silver);">No audit logs found.</p>
+            <p>Logs will appear here as users perform actions in the system.</p>
+        </div>
+    {% endif %}
+    
+    <!-- Statistics -->
+    <div class="statistics" style="margin-top: 30px; display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+        <div style="background: var(--dark-grey); padding: 15px; border-radius: 5px; text-align: center;">
+            <h4 style="margin: 0; color: var(--silver);">Total Events</h4>
+            <p style="font-size: 24px; font-weight: bold; margin: 10px 0;">{{ logs.total if logs else 0 }}</p>
+        </div>
+        <div style="background: var(--dark-grey); padding: 15px; border-radius: 5px; text-align: center;">
+            <h4 style="margin: 0; color: var(--silver);">Successful</h4>
+            <p style="font-size: 24px; font-weight: bold; margin: 10px 0; color: green;">
+                {{ logs.items | selectattr('success', 'equalto', True) | list | length if logs.items else 0 }}
+            </p>
+        </div>
+        <div style="background: var(--dark-grey); padding: 15px; border-radius: 5px; text-align: center;">
+            <h4 style="margin: 0; color: var(--silver);">Failed</h4>
+            <p style="font-size: 24px; font-weight: bold; margin: 10px 0; color: red;">
+                {{ logs.items | selectattr('success', 'equalto', False) | list | length if logs.items else 0 }}
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

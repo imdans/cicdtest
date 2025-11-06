@@ -9,9 +9,36 @@ venv.bak/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
+*.py[cod]
+*$py.class
 
 .pytest_cache/
 
 # Flask stuff:
 instance/
 .webassets-cache
+
+# Database files - DO NOT COMMIT
+*.db
+*.sqlite
+*.sqlite3
+dev.db
+test.db
+
+# Uploaded files
+static/uploads/*
+!static/uploads/.gitkeep
+
+# IDE
+.vscode/
+.idea/
+*.swp
+.DS_Store
+
+# Logs
+*.log
+
+# SSL Certificates
+*.pem
+*.key
+*.crt

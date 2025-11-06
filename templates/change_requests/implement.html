@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% block title %}Implement CR #{{ cr.cr_number }} - CMS{% endblock %}
+
+{% block content %}
+<script>
+// Store CSRF token for AJAX requests
+const csrfToken = "{{ csrf_token() }}";
+</script>
+
+<div style="max-width: 1200px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="card-header">Implementer Workspace</h1>
+        <a href="{{ url_for('cr.view', cr_id=cr.id) }}" class="btn btn-secondary">Back to CR Details</a>
+    </div>
+    
+    <!-- CR Header -->
+    <div class="card" style="background: linear-gradient(135deg, var(--medium-grey) 0%, var(--velvet-black) 100%); margin-bottom: 2rem;">
+        <h3 style="margin: 0 0 1rem 0; color: var(--soft-white);">{{ cr.cr_number }} - {{ cr.title }}</h3>
+        <p style="margin: 0; color: var(--silver);">{{ cr.description }}</p>
+    </div>
+    
+    <!-- Deadline Countdown -->
+    {% if cr.implementation_deadline %}
+    <div class="card" style="{% if is_deadline_passed %}border-left: 4px solid var(--silver);{% elif time_remaining and time_remaining.total_seconds() < 86400 %}border-left: 4px solid var(--accent-silver);{% else %}border-left: 4px solid var(--light-grey);{% endif %} margin-bottom: 2rem;">
+        <h4 style="margin: 0 0 1rem 0; color: var(--silver);">
+            Implementation Deadline
+        </h4>
+        <p style="margin: 0; font-size: 1.2rem; font-weight: bold; color: var(--soft-white);">
+            {{ cr.implementation_deadline.strftime('%B %d, %Y at %I:%M %p') }}
+        </p>
+        {% if is_deadline_passed %}
+        <p style="margin: 1rem 0 0 0; color: var(--silver); font-weight: bold;">
+            WARNING: DEADLINE PASSED! Admin has been notified.
+        </p>
+        {% elif time_remaining %}
+        <div id="countdown" style="margin-top: 1.5rem; font-size: 2rem; font-weight: bold; font-family: monospace; color: var(--soft-white);">
+            <span id="days"></span>:<span id="hours"></span>:<span id="minutes"></span>:<span id="seconds"></span>
+        </div>
+        <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem; color: var(--silver);">
+            Days : Hours : Minutes : Seconds
+        </p>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Status Actions -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h4 style="color: var(--silver);">Status & Actions</h4>
+        <p style="color: var(--silver);">Current Status: <strong style="color: {% if cr.status.value == 'approved' %}var(--silver){% elif cr.status.value == 'in_progress' %}var(--light-grey){% endif %};">{{ cr.status.value.replace('_', ' ').title() }}</strong></p>
+        
+        <form method="POST" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            {% if cr.status.value == 'approved' %}
+            <button type="submit" name="action" value="start" class="btn btn-primary">
+                Start Implementation
+            </button>
+            <p style="margin-top: 10px; color: var(--light-grey); font-size: 14px;">Click to begin working on this CR</p>
+            {% elif cr.status.value == 'in_progress' %}
+            <button type="submit" name="action" value="mark_implemented" class="btn btn-success" 
+                    onclick="return confirm('Are you sure you want to mark this CR as implemented? The approver will be notified for closure.')">
+                Mark as Implemented
+            </button>
+            <p style="margin-top: 10px; color: var(--light-grey); font-size: 14px;">Complete implementation and notify approver for closure</p>
+            {% endif %}
+        </form>
+    </div>
+    
+    <!-- Attached Files -->
+    <div style="background: var(--dark-grey); padding: 20px; border-radius: 8px; border: 1px solid var(--medium-grey); margin-bottom: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <h4 style="margin: 0; color: var(--silver);">Attached Files</h4>
+            {% if cr.status.value == 'in_progress' %}
+            <button onclick="document.getElementById('uploadFileInput').click()" class="btn btn-sm btn-success">
+                Add Attachment
+            </button>
+            <form id="uploadFileForm" method="POST" enctype="multipart/form-data" style="display: none;">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="upload_file">
+                <input type="file" id="uploadFileInput" name="file" onchange="uploadNewFile()" multiple>
+            </form>
+            {% endif %}
+        </div>
+        {% if cr.attachments %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 15px; margin-top: 15px;">
+            {% for attachment in cr.attachments %}
+            <div style="border: 1px solid var(--medium-grey); border-radius: 5px; padding: 15px; background: var(--dark-grey);">
+                <p style="margin: 0 0 10px 0; font-weight: bold; word-break: break-word; color: var(--silver);">
+                    📄 {{ attachment.original_filename }}
+                </p>
+                <p style="margin: 0 0 10px 0; font-size: 12px; color: var(--light-grey);">
+                    Uploaded: {{ attachment.uploaded_at.strftime('%b %d, %Y') }}<br>
+                    Size: {{ (attachment.file_size / 1024)|round(2) }} KB
+                </p>
+                <div style="display: flex; gap: 5px; flex-wrap: wrap;">
+                    <a href="{{ url_for('static', filename='uploads/' + attachment.filename) }}" 
+                       class="btn btn-sm btn-secondary" download>
+                        Download
+                    </a>
+                    <button onclick="viewFile({{ attachment.id }}, '{{ attachment.original_filename }}', '{{ attachment.file_path }}')" 
+                            class="btn btn-sm btn-primary">
+                        View/Edit
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p style="color: var(--light-grey); margin-top: 10px;">No files attached to this CR.</p>
+        {% endif %}
+    </div>
+    
+    <!-- Rollback Plan -->
+    {% if cr.rollback_plan or cr.rollback_plan_file %}
+    <div style="background: var(--dark-grey); padding: 20px; border-radius: 8px; border-left: 4px solid var(--accent-silver); margin-bottom: 20px;">
+        <h4 style="margin: 0 0 15px 0; color: var(--silver);">Rollback Plan</h4>
+        {% if cr.rollback_plan %}
+        <div style="background: var(--velvet-black); padding: 15px; border-radius: 5px; margin-bottom: 10px; border: 1px solid var(--dark-grey);">
+            <pre style="margin: 0; white-space: pre-wrap; font-family: monospace; font-size: 14px; color: var(--silver); line-height: 1.6;">{{ cr.rollback_plan }}</pre>
+        </div>
+        {% endif %}
+        {% if cr.rollback_plan_file %}
+        <a href="{{ url_for('static', filename='uploads/' + cr.rollback_plan_file) }}" 
+           class="btn btn-secondary" download style="margin-top: 10px;">
+            Download Rollback Plan Document
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Implementation Notes -->
+    <div class="card">
+        <h4 style="color: var(--silver);">Implementation Details</h4>
+        <div style="margin-top: 1.5rem;">
+            <p style="color: var(--silver);"><strong>Priority:</strong> <span style="color: {% if cr.priority.value == 'critical' %}var(--silver){% elif cr.priority.value == 'high' %}var(--accent-silver){% elif cr.priority.value == 'medium' %}var(--accent-silver){% else %}var(--silver){% endif %};">{{ cr.priority.value.upper() }}</span></p>
+            <p style="color: var(--silver);"><strong>Risk Level:</strong> {{ cr.risk_level.value.title() }}</p>
+            {% if cr.justification %}
+            <p style="color: var(--silver);"><strong>Justification:</strong></p>
+            <div style="background: var(--dark-grey); padding: 1rem; border-radius: 5px; margin-bottom: 1rem; color: var(--silver); line-height: 1.6; white-space: pre-wrap;">{{ cr.justification }}</div>
+            {% endif %}
+            {% if cr.impact_assessment %}
+            <p style="color: var(--silver);"><strong>Impact Assessment:</strong></p>
+            <div style="background: var(--dark-grey); padding: 1rem; border-radius: 5px; margin-bottom: 1rem; color: var(--silver); line-height: 1.6; white-space: pre-wrap;">{{ cr.impact_assessment }}</div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- File Viewer/Editor Modal -->
+<div id="fileModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center;">
+    <div style="background: var(--velvet-black); padding: 0; border-radius: 10px; max-width: 90%; max-height: 90%; width: 1000px; display: flex; flex-direction: column; border: 2px solid var(--medium-grey);">
+        <div style="padding: 20px; border-bottom: 1px solid var(--medium-grey); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: var(--silver);" id="fileModalTitle">File Viewer</h3>
+            <button onclick="closeFileModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: var(--silver);">&times;</button>
+        </div>
+        <div style="flex: 1; overflow: auto; padding: 20px;">
+            <textarea id="fileContent" style="width: 100%; height: 500px; font-family: monospace; padding: 10px; border: 1px solid var(--medium-grey); border-radius: 5px; background: var(--dark-grey); color: var(--silver);"></textarea>
+        </div>
+        <div style="padding: 20px; border-top: 1px solid var(--medium-grey); text-align: right;">
+            <button onclick="saveFile()" class="btn btn-success">Save Changes</button>
+            <button onclick="closeFileModal()" class="btn btn-secondary">Cancel</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentFileId = null;
+
+// Countdown Timer
+{% if cr.implementation_deadline and time_remaining and not is_deadline_passed %}
+const deadline = new Date('{{ cr.implementation_deadline.isoformat() }}').getTime();
+
+function updateCountdown() {
+    const now = new Date().getTime();
+    const distance = deadline - now;
+    
+    if (distance < 0) {
+        document.getElementById('countdown').innerHTML = '<span style="color: var(--silver);">DEADLINE PASSED!</span>';
+        return;
+    }
+    
+    const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+    
+    document.getElementById('days').textContent = String(days).padStart(2, '0');
+    document.getElementById('hours').textContent = String(hours).padStart(2, '0');
+    document.getElementById('minutes').textContent = String(minutes).padStart(2, '0');
+    document.getElementById('seconds').textContent = String(seconds).padStart(2, '0');
+}
+
+updateCountdown();
+setInterval(updateCountdown, 1000);
+{% endif %}
+
+// File Viewer/Editor
+function viewFile(fileId, filename, filepath) {
+    currentFileId = fileId;
+    document.getElementById('fileModalTitle').textContent = filename;
+    document.getElementById('fileModal').style.display = 'flex';
+    
+    // Fetch file content
+    fetch('/static/uploads/' + filepath.split('/').pop())
+        .then(response => response.text())
+        .then(content => {
+            document.getElementById('fileContent').value = content;
+        })
+        .catch(error => {
+            document.getElementById('fileContent').value = 'Error loading file: ' + error;
+        });
+}
+
+function closeFileModal() {
+    document.getElementById('fileModal').style.display = 'none';
+    currentFileId = null;
+}
+
+function saveFile() {
+    if (!currentFileId) return;
+    
+    const content = document.getElementById('fileContent').value;
+    const formData = new FormData();
+    formData.append('csrf_token', csrfToken);
+    formData.append('action', 'save_file');
+    formData.append('file_id', currentFileId);
+    formData.append('file_content', content);
+    
+    fetch('{{ url_for("cr.implement", cr_id=cr.id) }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            closeFileModal();
+        } else {
+            showToast(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error saving file: ' + error, 'danger');
+    });
+}
+
+function uploadNewFile() {
+    const fileInput = document.getElementById('uploadFileInput');
+    const files = fileInput.files;
+    
+    if (files.length === 0) return;
+    
+    const formData = new FormData();
+    formData.append('csrf_token', csrfToken);
+    formData.append('action', 'upload_file');
+    
+    for (let i = 0; i < files.length; i++) {
+        formData.append('files', files[i]);
+    }
+    
+    fetch('{{ url_for("cr.implement", cr_id=cr.id) }}', {
+        method: 'POST',
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            showToast(data.message, 'success');
+            window.location.reload();
+        } else {
+            showToast(data.message, 'danger');
+        }
+    })
+    .catch(error => {
+        showToast('Error uploading file: ' + error, 'danger');
+    });
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeFileModal();
+    }
+});
+</script>
+
+<style>
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+</style>
+
+{% endblock %}

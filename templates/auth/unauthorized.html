@@ -1,0 +1,40 @@
+{% extends 'base.html' %}
+{% block title %}Unauthorized Access{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 0 auto; padding-top: 4rem; text-align: center;">
+    <div class="card">
+        <div style="font-size: 4rem; color: var(--silver); margin-bottom: 1rem;">403</div>
+        
+        <h1 style="color: var(--silver); font-size: 1.75rem; margin-bottom: 1rem;">
+            Unauthorized Access
+        </h1>
+        
+        <p style="color: var(--light-grey); font-size: 1.1rem; margin-bottom: 2rem;">
+            You don't have permission to access this resource. 
+            {% if message %}{{ message }}{% endif %}
+        </p>
+        
+        <div class="alert alert-warning" style="text-align: left;">
+            <p style="color: var(--silver); margin-bottom: 0.5rem;"><strong>Common reasons:</strong></p>
+            <ul style="color: var(--light-grey); margin: 0; padding-left: 1.5rem;">
+                <li>You need a specific role to access this feature</li>
+                <li>Your account hasn't been assigned to the required project</li>
+                <li>This action requires higher privileges</li>
+            </ul>
+        </div>
+        
+        <div style="margin-top: 2rem; display: flex; gap: 1rem; justify-content: center;">
+            <a href="{{ url_for('home') }}" class="btn btn-primary">Go to Home</a>
+            <a href="{{ url_for('change_requests.list') }}" class="btn btn-secondary">View Change Requests</a>
+        </div>
+        
+        <div style="margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--medium-grey);">
+            <p style="color: var(--light-grey); margin-bottom: 0.5rem;">Need help?</p>
+            <p style="color: var(--silver);">
+                Contact your system administrator if you believe this is an error.
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}

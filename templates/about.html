@@ -1,5 +1,62 @@
 {% extends 'base.html' %}
+{% block title %}About - Change Management System{% endblock %}
 
 {% block content %}
-    <h1>{% block title %} Welcome to your About page! {% endblock %}</h1>
+<div style="max-width: 900px; margin: 0 auto;">
+    <div class="card">
+        <h1 class="card-header" style="text-align: center;">About the Change Management System</h1>
+        
+        <section style="margin-bottom: 2rem;">
+            <h2 style="color: var(--silver); margin-bottom: 1rem;">Overview</h2>
+            <p style="color: var(--silver); line-height: 1.8;">
+                The Change Management System is an enterprise-grade solution designed to streamline and standardize 
+                organizational change processes. Built with security, compliance, and efficiency in mind, this system 
+                provides comprehensive tools for managing change requests from inception through implementation.
+            </p>
+        </section>
+        
+        <section style="margin-bottom: 2rem;">
+            <h2 style="color: var(--silver); margin-bottom: 1rem;">Key Features</h2>
+            <ul style="list-style: none; padding-left: 1rem;">
+                <li style="padding: 0.5rem 0; color: var(--silver);">• Multi-factor authentication with time-based OTP</li>
+                <li style="padding: 0.5rem 0; color: var(--silver);">• Role-based access control with four distinct user types</li>
+                <li style="padding: 0.5rem 0; color: var(--silver);">• Project-based organization with granular permissions</li>
+                <li style="padding: 0.5rem 0; color: var(--silver);">• Complete audit trail for compliance and reporting</li>
+                <li style="padding: 0.5rem 0; color: var(--silver);">• SLA management and monitoring capabilities</li>
+                <li style="padding: 0.5rem 0; color: var(--silver);">• Automated email notifications for workflow events</li>
+                <li style="padding: 0.5rem 0; color: var(--silver);">• Risk assessment and rollback planning tools</li>
+            </ul>
+        </section>
+        
+        <section style="margin-bottom: 2rem;">
+            <h2 style="color: var(--silver); margin-bottom: 1rem;">Technology Stack</h2>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+                <div style="background: var(--dark-grey); padding: 1rem; border-radius: 8px;">
+                    <h4 style="color: var(--soft-white); margin-bottom: 0.5rem;">Backend</h4>
+                    <p style="color: var(--silver); margin: 0;">Flask, Python, SQLAlchemy</p>
+                </div>
+                <div style="background: var(--dark-grey); padding: 1rem; border-radius: 8px;">
+                    <h4 style="color: var(--soft-white); margin-bottom: 0.5rem;">Database</h4>
+                    <p style="color: var(--silver); margin: 0;">SQLite / PostgreSQL</p>
+                </div>
+                <div style="background: var(--dark-grey); padding: 1rem; border-radius: 8px;">
+                    <h4 style="color: var(--soft-white); margin-bottom: 0.5rem;">Security</h4>
+                    <p style="color: var(--silver); margin: 0;">Flask-Login, PyOTP</p>
+                </div>
+                <div style="background: var(--dark-grey); padding: 1rem; border-radius: 8px;">
+                    <h4 style="color: var(--soft-white); margin-bottom: 0.5rem;">UI</h4>
+                    <p style="color: var(--silver); margin: 0;">Jinja2, Custom CSS</p>
+                </div>
+            </div>
+        </section>
+        
+        <section>
+            <h2 style="color: var(--silver); margin-bottom: 1rem;">Support</h2>
+            <p style="color: var(--silver); line-height: 1.8;">
+                For technical support or questions about the system, please contact your system administrator. 
+                Detailed documentation is available in the developer and user guides.
+            </p>
+        </section>
+    </div>
+</div>
 {% endblock %}

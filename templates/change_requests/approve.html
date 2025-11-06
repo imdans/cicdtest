@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}Approve CR #{{ cr.cr_number }} - CMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <h1 class="card-header" style="margin-bottom: 2rem;">Approve/Reject Change Request #{{ cr.cr_number }}</h1>
+    
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="color: var(--silver); margin-bottom: 1rem;">{{ cr.title }}</h3>
+        <p style="color: var(--silver);"><strong>Description:</strong> {{ cr.description }}</p>
+        <p style="color: var(--silver);"><strong>Priority:</strong> 
+            <span class="badge badge-{{ 'danger' if cr.priority.value == 'critical' else 'warning' if cr.priority.value == 'high' else 'info' if cr.priority.value == 'medium' else 'secondary' }}">
+                {{ cr.priority.value.upper() }}
+            </span>
+        </p>
+        <p style="color: var(--silver);"><strong>Risk Level:</strong> 
+            <span class="badge badge-{{ 'danger' if cr.risk_level.value == 'high' else 'warning' if cr.risk_level.value == 'medium' else 'secondary' }}">
+                {{ cr.risk_level.value.upper() }}
+            </span>
+        </p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: var(--silver); margin-bottom: 1.5rem;">Approval Decision</h3>
+        <form method="POST" action="{{ url_for('cr.approve', cr_id=cr.id) }}">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.comments.label }}
+                {{ form.comments(class="form-control", rows=4, placeholder="Provide feedback on your decision") }}
+                {% if form.comments.errors %}
+                    <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                        {% for error in form.comments.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                {{ form.approve(class="btn btn-primary") }}
+                {{ form.reject(class="btn btn-danger") }}
+                <a href="{{ url_for('cr.view', cr_id=cr.id) }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

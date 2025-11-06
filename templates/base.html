@@ -1,21 +1,268 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>{% block title %}{% endblock %}</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>{% block title %}Change Management System{% endblock %}</title>
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
         <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='site.css')}}" />
+        <style>
+            /* Toast Notification Styles */
+            #toast-container {
+                position: fixed;
+                top: 80px;
+                right: 20px;
+                z-index: 10000;
+                max-width: 400px;
+            }
+            
+            .toast {
+                background: var(--dark-grey);
+                border: 1px solid var(--medium-grey);
+                border-radius: 8px;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+                margin-bottom: 10px;
+                padding: 16px 20px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                animation: slideIn 0.3s ease-out;
+                border-left: 4px solid;
+                position: relative;
+                overflow: hidden;
+            }
+            
+            .toast.removing {
+                animation: slideOut 0.3s ease-out forwards;
+            }
+            
+            @keyframes slideIn {
+                from {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            @keyframes slideOut {
+                from {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+                to {
+                    transform: translateX(400px);
+                    opacity: 0;
+                }
+            }
+            
+            .toast-success {
+                border-left-color: var(--silver);
+            }
+            
+            .toast-danger, .toast-error {
+                border-left-color: #dc3545;
+                background: linear-gradient(135deg, rgba(220, 53, 69, 0.15) 0%, var(--dark-grey) 100%);
+            }
+            
+            .toast-warning {
+                border-left-color: var(--accent-silver);
+            }
+            
+            .toast-info {
+                border-left-color: var(--light-grey);
+            }
+            
+            .toast-icon {
+                font-size: 20px;
+                flex-shrink: 0;
+                font-weight: 700;
+            }
+            
+            .toast-success .toast-icon {
+                color: var(--silver);
+            }
+            
+            .toast-danger .toast-icon, .toast-error .toast-icon {
+                color: #dc3545;
+                filter: brightness(1.2);
+            }
+            
+            .toast-warning .toast-icon {
+                color: var(--accent-silver);
+            }
+            
+            .toast-info .toast-icon {
+                color: var(--light-grey);
+            }
+            
+            .toast-content {
+                flex: 1;
+                color: var(--silver);
+                font-size: 14px;
+                line-height: 1.4;
+            }
+            
+            .toast-close {
+                background: none;
+                border: none;
+                font-size: 20px;
+                color: var(--silver);
+                cursor: pointer;
+                padding: 0;
+                width: 24px;
+                height: 24px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 4px;
+                flex-shrink: 0;
+                transition: all 0.2s;
+            }
+            
+            .toast-close:hover {
+                background: var(--medium-grey);
+                color: var(--soft-white);
+            }
+            
+            .toast-progress {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                height: 3px;
+                background: currentColor;
+                opacity: 0.3;
+                animation: progress 5s linear forwards;
+            }
+            
+            @keyframes progress {
+                from {
+                    width: 100%;
+                }
+                to {
+                    width: 0%;
+                }
+            }
+        </style>
     </head>
 
     <body>
-        <div class="navbar">
-            <a href="{{ url_for('home') }}" class="navbar-brand">Home</a>
-            <a href="{{ url_for('about') }}" class="navbar-item">About</a>
-        </div>
+        <nav class="navbar">
+            <a href="{{ url_for('index') }}" class="navbar-brand">CMS</a>
+            {% if current_user.is_authenticated %}
+                <a href="{{ url_for('cr.list_change_requests') }}" class="navbar-item">Change Requests</a>
+                
+                {% if current_user.is_admin() %}
+                    <a href="{{ url_for('audit.view_logs') }}" class="navbar-item">Audit Logs</a>
+                    <a href="{{ url_for('admin.dashboard') }}" class="navbar-item">Admin</a>
+                {% endif %}
+                
+                <a href="{{ url_for('auth.profile') }}" class="navbar-item" style="margin-left: auto; cursor: pointer;">
+                    <span class="badge badge-{{ current_user.role.name.lower() }}" style="margin-right: 10px;">
+                        {{ current_user.role.name|title }}
+                    </span>
+                    {{ current_user.email }}
+                </a>
+                <a href="{{ url_for('auth.logout') }}" class="navbar-item">Logout</a>
+            {% else %}
+                <a href="{{ url_for('auth.login') }}" class="navbar-item" style="margin-left: auto;">Login</a>
+            {% endif %}
+        </nav>
 
-        <div class="body-content">
+        <main class="body-content">
             {% block content %}
             {% endblock %}
-            <hr/>
-        </div>
+        </main>
+
+        <div id="toast-container"></div>
+
+        <script>
+            class ToastManager {
+                constructor() {
+                    this.container = document.getElementById('toast-container');
+                    this.maxToasts = 3;
+                    this.autoCloseDelay = 5000;
+                }
+
+                getIcon(category) {
+                    const icons = {
+                        'success': '✓',
+                        'danger': '✕',
+                        'error': '✕',
+                        'warning': '!',
+                        'info': 'i'
+                    };
+                    return icons[category] || 'i';
+                }
+
+                show(message, category = 'info') {
+                    const existingToasts = this.container.querySelectorAll('.toast');
+                    if (existingToasts.length >= this.maxToasts) {
+                        this.remove(existingToasts[0]);
+                    }
+
+                    const toast = document.createElement('div');
+                    toast.className = `toast toast-${category}`;
+                    
+                    const icon = document.createElement('div');
+                    icon.className = 'toast-icon';
+                    icon.textContent = this.getIcon(category);
+                    
+                    const content = document.createElement('div');
+                    content.className = 'toast-content';
+                    content.textContent = message;
+                    
+                    const closeBtn = document.createElement('button');
+                    closeBtn.className = 'toast-close';
+                    closeBtn.innerHTML = '×';
+                    closeBtn.onclick = () => this.remove(toast);
+                    
+                    const progress = document.createElement('div');
+                    progress.className = 'toast-progress';
+                    
+                    toast.appendChild(icon);
+                    toast.appendChild(content);
+                    toast.appendChild(closeBtn);
+                    toast.appendChild(progress);
+                    
+                    this.container.appendChild(toast);
+                    
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            this.remove(toast);
+                        }
+                    }, this.autoCloseDelay);
+                }
+
+                remove(toast) {
+                    toast.classList.add('removing');
+                    setTimeout(() => {
+                        if (toast.parentElement) {
+                            toast.remove();
+                        }
+                    }, 300);
+                }
+            }
+
+            const toastManager = new ToastManager();
+
+            document.addEventListener('DOMContentLoaded', function() {
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            toastManager.show({{ message|tojson }}, {{ category|tojson }});
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            });
+
+            window.showToast = (message, category = 'info') => {
+                toastManager.show(message, category);
+            };
+        </script>
     </body>
 </html>

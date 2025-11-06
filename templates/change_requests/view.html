@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+{% block title %}{{ cr.title }} - Change Request{% endblock %}
+
+{% block content %}
+<div style="max-width: 1200px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; flex-wrap: wrap; gap: 1rem;">
+        <h1 class="card-header">Change Request #{{ cr.cr_number }}</h1>
+        <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+            <a href="{{ url_for('cr.list_change_requests') }}" class="btn btn-secondary">Back to List</a>
+            {% if cr.can_edit(current_user) %}
+                <a href="{{ url_for('cr.edit', cr_id=cr.id) }}" class="btn btn-primary">Edit</a>
+            {% endif %}
+            {% if current_user.has_permission('approve_cr') and cr.status.value == 'pending_approval' %}
+                <a href="{{ url_for('cr.approve', cr_id=cr.id) }}" class="btn btn-primary">Approve/Reject</a>
+            {% endif %}
+            {% if current_user.has_permission('implement_cr') and cr.status.value in ['approved', 'in_progress'] %}
+                <a href="{{ url_for('cr.implement', cr_id=cr.id) }}" class="btn btn-info">Implementation Workspace</a>
+            {% endif %}
+            {% if current_user.has_permission('approve_cr') and cr.status.value == 'implemented' %}
+                <a href="{{ url_for('cr.close_cr', cr_id=cr.id) }}" class="btn btn-primary">Close CR</a>
+            {% endif %}
+        </div>
+    </div>
+    
+    <!-- Status Badge -->
+    <div style="margin-bottom: 2rem;">
+        <span class="badge badge-{{ cr.status.value }}" style="font-size: 1.1rem; padding: 0.5rem 1rem;">
+            {{ cr.status.value.upper().replace('_', ' ') }}
+        </span>
+    </div>
+    
+    <!-- CR Details -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+            <div>
+                <h3 style="color: var(--silver); margin-bottom: 1rem;">Basic Information</h3>
+                <p style="color: var(--silver);"><strong>Title:</strong> {{ cr.title }}</p>
+                <p style="color: var(--silver);"><strong>CR Number:</strong> {{ cr.cr_number }}</p>
+                <p style="color: var(--silver);"><strong>Status:</strong> {{ cr.status.value.replace('_', ' ').title() }}</p>
+                <p style="color: var(--silver);"><strong>Priority:</strong> 
+                    <span class="badge badge-{{ 'danger' if cr.priority.value == 'critical' else 'warning' if cr.priority.value == 'high' else 'info' if cr.priority.value == 'medium' else 'secondary' }}">
+                        {{ cr.priority.value.upper() }}
+                    </span>
+                </p>
+                <p style="color: var(--silver);"><strong>Risk Level:</strong> 
+                    <span class="badge badge-{{ 'danger' if cr.risk_level.value == 'high' else 'warning' if cr.risk_level.value == 'medium' else 'secondary' }}">
+                        {{ cr.risk_level.value.upper() }}
+                    </span>
+                </p>
+            </div>
+            <div>
+                <h3 style="color: var(--silver); margin-bottom: 1rem;">People & Dates</h3>
+                <p style="color: var(--silver);"><strong>Requester:</strong> {{ cr.requester.username if cr.requester else 'N/A' }}</p>
+                <p style="color: var(--silver);"><strong>Created:</strong> {{ cr.created_at | to_ist }}</p>
+                <p style="color: var(--silver);"><strong>Updated:</strong> {{ cr.updated_at | to_ist }}</p>
+                {% if cr.approver %}
+                <p style="color: var(--silver);"><strong>Approver:</strong> {{ cr.approver.username }}</p>
+                <p style="color: var(--silver);"><strong>Approved At:</strong> {{ cr.approved_date | to_ist }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Description -->
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="color: var(--silver); margin-bottom: 1rem;">Description</h3>
+        <p style="color: var(--silver); line-height: 1.8;">{{ cr.description }}</p>
+    </div>
+    
+    <!-- Justification -->
+    {% if cr.justification %}
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="color: var(--silver); margin-bottom: 1rem;">Justification</h3>
+        <p style="color: var(--silver); line-height: 1.8;">{{ cr.justification }}</p>
+    </div>
+    {% endif %}
+    
+    <!-- Impact Assessment -->
+    {% if cr.impact_assessment %}
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="color: var(--silver); margin-bottom: 1rem;">Impact Assessment</h3>
+        <p style="color: var(--silver); line-height: 1.8;">{{ cr.impact_assessment }}</p>
+    </div>
+    {% endif %}
+    
+    <!-- Rollback Plan -->
+    {% if cr.rollback_plan %}
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="color: var(--silver); margin-bottom: 1rem;">Rollback Plan</h3>
+        <p style="color: var(--silver); line-height: 1.8;">{{ cr.rollback_plan }}</p>
+    </div>
+    {% endif %}
+    
+    <!-- Attachments -->
+    {% if cr.attachments %}
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="color: var(--silver); margin-bottom: 1rem;">Attachments</h3>
+        <ul style="list-style: none; padding: 0;">
+            {% for attachment in cr.attachments %}
+            <li style="padding: 0.5rem 0; color: var(--silver);">
+                <a href="{{ url_for('cr.download_attachment', attachment_id=attachment.id) }}" style="color: var(--silver); text-decoration: underline;">
+                    {{ attachment.original_filename }}
+                </a>
+                <small style="color: var(--light-grey);">({{ attachment.file_size }} bytes)</small>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+    
+    <!-- Comments/History -->
+    {% if cr.approver_comments or cr.implementation_notes or cr.closure_notes %}
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="color: var(--silver); margin-bottom: 1rem;">Activity History</h3>
+        
+        {% if cr.approver_comments %}
+        <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--medium-grey);">
+            <h4 style="color: var(--silver); font-size: 1rem;">Approver Comments</h4>
+            <p style="color: var(--silver);">{{ cr.approver_comments }}</p>
+            {% if cr.approved_date %}
+            <small style="color: var(--light-grey);">{{ cr.approved_date | to_ist }}</small>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if cr.implementation_notes %}
+        <div style="margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-bottom: 1px solid var(--medium-grey);">
+            <h4 style="color: var(--silver); font-size: 1rem;">Implementation Notes</h4>
+            <p style="color: var(--silver);">{{ cr.implementation_notes }}</p>
+            {% if cr.implemented_date %}
+            <small style="color: var(--light-grey);">{{ cr.implemented_date | to_ist }}</small>
+            {% endif %}
+        </div>
+        {% endif %}
+        
+        {% if cr.closure_notes %}
+        <div>
+            <h4 style="color: var(--silver); font-size: 1rem;">Closure Notes</h4>
+            <p style="color: var(--silver);">{{ cr.closure_notes }}</p>
+            {% if cr.closed_date %}
+            <small style="color: var(--light-grey);">{{ cr.closed_date | to_ist }}</small>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+    
+    <!-- Audit Trail -->
+    {% if cr.audit_logs %}
+    <div class="card">
+        <h3 style="color: var(--silver); margin-bottom: 1rem;">Audit Trail</h3>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>Details</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in cr.audit_logs %}
+                <tr>
+                    <td>{{ log.timestamp | to_ist }}</td>
+                    <td>{{ log.username or 'System' }}</td>
+                    <td>{{ log.event_category }}</td>
+                    <td>{{ log.event_description }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

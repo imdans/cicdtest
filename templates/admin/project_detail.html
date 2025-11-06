@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}Project Details - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-project-detail">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+            <h2>{{ project.name }} ({{ project.code }})</h2>
+            <p>{{ project.description }}</p>
+        </div>
+        <div>
+            <button type="button" class="btn btn-danger" onclick="showDeleteModal()">
+                <i class="fas fa-trash"></i> Delete Project
+            </button>
+        </div>
+    </div>
+    
+    <!-- Delete Project Modal -->
+    <div id="deleteModal" style="display: none; position: fixed; z-index: 9999; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+        <div style="background-color: var(--dark-grey); margin: 10% auto; padding: 30px; border: 1px solid var(--medium-grey); border-radius: 8px; width: 500px; max-width: 90%;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h3 style="margin: 0; color: var(--silver);">
+                    <i class="fas fa-exclamation-triangle"></i> Delete Project
+                </h3>
+                <button onclick="closeDeleteModal()" style="background: none; border: none; font-size: 28px; cursor: pointer; color: var(--silver);">&times;</button>
+            </div>
+            
+            <div class="alert alert-warning" style="margin-bottom: 2rem;">
+                <p style="margin: 0; font-weight: bold;">WARNING: This action cannot be undone!</p>
+                <ul style="margin: 1rem 0 0 0;">
+                    <li>Project "{{ project.name }}" will be deactivated</li>
+                    <li>All {{ members|length }} member(s) will be removed</li>
+                    <li>Projects with active CRs cannot be deleted</li>
+                </ul>
+            </div>
+            
+            <form method="POST" action="{{ url_for('admin.delete_project', project_id=project.id) }}" id="deleteForm">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                
+                <div class="form-group">
+                    <label for="admin_password" style="font-weight: bold;">
+                        <i class="fas fa-lock"></i> Enter your admin password to confirm:
+                    </label>
+                    <input type="password" 
+                           class="form-control" 
+                           id="admin_password" 
+                           name="admin_password" 
+                           placeholder="Enter your password"
+                           required
+                           autocomplete="current-password">
+                </div>
+                
+                <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+                    <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash"></i> Confirm Delete
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <script>
+    function showDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'block';
+        document.getElementById('admin_password').focus();
+    }
+    
+    function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+        document.getElementById('deleteForm').reset();
+    }
+    
+    // Close modal on escape key
+    document.addEventListener('keydown', function(event) {
+        if (event.key === 'Escape') {
+            closeDeleteModal();
+        }
+    });
+    
+    // Close modal when clicking outside
+    window.onclick = function(event) {
+        const modal = document.getElementById('deleteModal');
+        if (event.target == modal) {
+            closeDeleteModal();
+        }
+    }
+    </script>
+    
+    <h3>Project Members</h3>
+    {% if members %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>User</th>
+                <th>Role</th>
+                <th>Joined</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for member in members %}
+            <tr>
+                <td>{{ member.user.email }}</td>
+                <td>{{ member.role.name|title }}</td>
+                <td>{{ member.joined_at | to_ist }}</td>
+                <td>
+                    <form method="POST" action="{{ url_for('admin.remove_project_member', project_id=project.id, user_id=member.user_id) }}" style="display: inline;">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Remove this user?')">Remove</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No members yet.</p>
+    {% endif %}
+    
+    <h3>Add Member</h3>
+    <form method="POST" action="{{ url_for('admin.add_project_member', project_id=project.id) }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        <div style="display: flex; gap: 10px; align-items: end;">
+            <div class="form-group">
+                <label for="user_id">User</label>
+                <select name="user_id" id="user_id" class="form-control" required>
+                    <option value="">Select User</option>
+                    {% for user in unassigned_users %}
+                    <option value="{{ user.id }}">{{ user.email }} ({{ user.role.name|title }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="role_id">Role in Project</label>
+                <select name="role_id" id="role_id" class="form-control" required>
+                    <option value="">Select Role</option>
+                    {% for role in roles %}
+                    <option value="{{ role.id }}">{{ role.name|title }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary">Add Member</button>
+        </div>
+    </form>
+    
+    <h3 style="margin-top: 30px;">Recent Change Requests</h3>
+    {% if crs %}
+    <table class="table">
+        <thead>
+            <tr>
+                <th>CR Number</th>
+                <th>Title</th>
+                <th>Status</th>
+                <th>Requester</th>
+                <th>Created</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for cr in crs %}
+            <tr>
+                <td>{{ cr.cr_number }}</td>
+                <td><a href="{{ url_for('cr.view', cr_id=cr.id) }}">{{ cr.title }}</a></td>
+                <td>{{ cr.status.value }}</td>
+                <td>{{ cr.requester.email if cr.requester else 'N/A' }}</td>
+                <td>{{ cr.created_at | to_ist }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <p>No change requests yet.</p>
+    {% endif %}
+    
+    <div style="margin-top: 30px;">
+        <a href="{{ url_for('admin.projects') }}" class="btn btn-secondary">Back to Projects</a>
+    </div>
+</div>
+{% endblock %}

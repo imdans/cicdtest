@@ -1,1 +1,50 @@
-flask
+# Core Flask
+Flask>=2.3.0,<4.0.0
+Flask-SQLAlchemy>=3.0.0,<4.0.0
+Flask-Login>=0.6.0,<1.0.0
+Flask-WTF>=1.1.0,<2.0.0
+Flask-Migrate>=4.0.0,<5.0.0
+
+# Database
+SQLAlchemy>=2.0.0,<3.0.0
+
+# Security
+cryptography>=41.0.0
+pyotp>=2.8.0
+qrcode>=7.4.0
+Pillow>=10.0.0
+Werkzeug>=3.0.0
+itsdangerous>=2.1.0
+
+# Forms and Validation
+WTForms>=3.0.0,<4.0.0
+email-validator>=2.0.0
+
+# Environment and Configuration
+python-dotenv>=1.0.0
+
+# Date and Time
+python-dateutil>=2.8.0
+
+# Background Tasks
+APScheduler>=3.10.0
+
+# WSGI Server with TLS support
+gunicorn>=21.0.0
+gevent>=23.9.0
+
+# Email support
+Flask-Mail>=0.9.1
+
+# Rate limiting
+Flask-Limiter>=3.3.0
+
+# CORS support
+Flask-CORS>=4.0.0
+
+# PDF generation
+weasyprint>=60.0
+
+# Testing
+pytest>=7.4.0
+pytest-cov>=4.1.0

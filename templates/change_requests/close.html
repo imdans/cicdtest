@@ -1,0 +1,37 @@
+{% extends 'base.html' %}
+{% block title %}Close CR #{{ cr.cr_number }} - CMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <h1 class="card-header" style="margin-bottom: 2rem;">Close Change Request #{{ cr.cr_number }}</h1>
+    
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="color: var(--silver); margin-bottom: 1rem;">{{ cr.title }}</h3>
+        <p style="color: var(--silver);"><strong>Status:</strong> <span class="badge badge-{{ cr.status.value }}">{{ cr.status.value.upper().replace('_', ' ') }}</span></p>
+        <p style="color: var(--silver);"><strong>Implementation Notes:</strong> {{ cr.implementation_notes or 'N/A' }}</p>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: var(--silver); margin-bottom: 1.5rem;">Closure Information</h3>
+        <form method="POST" action="{{ url_for('cr.close_cr', cr_id=cr.id) }}">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.closure_notes.label }}
+                {{ form.closure_notes(class="form-control", rows=5, placeholder="Confirm successful implementation and provide any final notes") }}
+                {% if form.closure_notes.errors %}
+                    <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                        {% for error in form.closure_notes.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+                <small style="color: var(--silver);">Document the verification of the implementation</small>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                {{ form.submit(class="btn btn-primary") }}
+                <a href="{{ url_for('cr.view', cr_id=cr.id) }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

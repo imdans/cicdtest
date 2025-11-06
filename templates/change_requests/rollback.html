@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+{% block title %}Rollback CR #{{ cr.cr_number }} - CMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <h1 class="card-header" style="margin-bottom: 2rem;">Rollback Change Request #{{ cr.cr_number }}</h1>
+    
+    <div class="alert alert-danger" style="margin-bottom: 2rem;">
+        <p style="margin: 0; font-weight: bold;">WARNING: This will revert the implemented changes.</p>
+        <p style="margin: 0.5rem 0 0 0;">Only proceed if the implementation has caused issues and needs to be reverted.</p>
+    </div>
+    
+    <div class="card" style="margin-bottom: 2rem;">
+        <h3 style="color: var(--silver); margin-bottom: 1rem;">{{ cr.title }}</h3>
+        <p style="color: var(--silver);"><strong>Rollback Plan:</strong></p>
+        <div style="background: var(--dark-grey); padding: 1rem; border-radius: 5px; color: var(--silver);">
+            {{ cr.rollback_plan or 'No rollback plan documented' }}
+        </div>
+    </div>
+    
+    <div class="card">
+        <h3 style="color: var(--silver); margin-bottom: 1.5rem;">Rollback Execution</h3>
+        <form method="POST" action="{{ url_for('cr.rollback', cr_id=cr.id) }}">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.rollback_notes.label }}
+                {{ form.rollback_notes(class="form-control", rows=5, placeholder="Document the reason for rollback and steps taken") }}
+                {% if form.rollback_notes.errors %}
+                    <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                        {% for error in form.rollback_notes.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+                <small style="color: var(--silver);">Required - explain why rollback is necessary</small>
+            </div>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                {{ form.submit(class="btn btn-danger", value="Execute Rollback") }}
+                <a href="{{ url_for('cr.view', cr_id=cr.id) }}" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

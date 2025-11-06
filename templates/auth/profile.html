@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - CMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <h2 style="color: var(--soft-white); margin-bottom: 0.5rem;">My Profile</h2>
+    <p style="color: var(--silver); margin-bottom: 2rem;">View and update your account information</p>
+    
+    <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: 2rem;">
+        <!-- Profile Summary Card -->
+        <div class="card">
+            <div style="text-align: center; padding: 1rem;">
+                <div style="width: 100px; height: 100px; border-radius: 50%; background: linear-gradient(135deg, var(--accent-silver), var(--silver)); margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; color: var(--velvet-black); font-weight: bold;">
+                    {% if current_user.first_name %}
+                        {{ current_user.first_name[0]|upper }}{% if current_user.last_name %}{{ current_user.last_name[0]|upper }}{% endif %}
+                    {% else %}
+                        {{ current_user.username[0]|upper }}
+                    {% endif %}
+                </div>
+                <h3 style="color: var(--soft-white); margin: 0 0 0.5rem 0;">
+                    {% if current_user.first_name %}
+                        {{ current_user.first_name }} {{ current_user.last_name or '' }}
+                    {% else %}
+                        {{ current_user.username }}
+                    {% endif %}
+                </h3>
+                <p style="color: var(--silver); margin: 0 0 1rem 0; font-size: 0.9rem;">{{ current_user.email }}</p>
+                
+                <div style="padding: 1rem; background: var(--medium-grey); border-radius: 4px; text-align: left;">
+                    <div style="margin-bottom: 0.5rem;">
+                        <small style="color: var(--silver);">Role:</small>
+                        <div style="color: var(--soft-white); font-weight: 500;">
+                            {{ current_user.role.name if current_user.role else 'N/A' }}
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <small style="color: var(--silver);">Username:</small>
+                        <div style="color: var(--soft-white); font-family: monospace;">
+                            {{ current_user.username }}
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 0.5rem;">
+                        <small style="color: var(--silver);">MFA Status:</small>
+                        <div>
+                            {% if current_user.mfa_enabled %}
+                                <span class="badge badge-success">Enabled</span>
+                            {% else %}
+                                <span class="badge badge-secondary">Disabled</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div>
+                        <small style="color: var(--silver);">Member Since:</small>
+                        <div style="color: var(--soft-white);">
+                            {{ current_user.created_at.strftime('%B %d, %Y') if current_user.created_at else 'N/A' }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Edit Profile Form -->
+        <div class="card">
+            <h3 class="card-header">Edit Profile</h3>
+            <form method="POST" action="{{ url_for('auth.profile') }}">
+                {{ form.hidden_tag() }}
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; color: var(--silver); margin-bottom: 0.5rem; font-weight: 500;">
+                        Basic Information
+                    </label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            {{ form.first_name.label(style="display: block; color: var(--silver); margin-bottom: 0.5rem;") }}
+                            {{ form.first_name(class="form-control", placeholder="First name") }}
+                            {% if form.first_name.errors %}
+                                <small style="color: #dc3545;">{{ form.first_name.errors[0] }}</small>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ form.last_name.label(style="display: block; color: var(--silver); margin-bottom: 0.5rem;") }}
+                            {{ form.last_name(class="form-control", placeholder="Last name") }}
+                            {% if form.last_name.errors %}
+                                <small style="color: #dc3545;">{{ form.last_name.errors[0] }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="margin-bottom: 1.5rem;">
+                    {{ form.email.label(style="display: block; color: var(--silver); margin-bottom: 0.5rem; font-weight: 500;") }}
+                    {{ form.email(class="form-control", placeholder="your.email@example.com") }}
+                    {% if form.email.errors %}
+                        <small style="color: #dc3545;">{{ form.email.errors[0] }}</small>
+                    {% endif %}
+                    <small style="color: var(--light-grey); display: block; margin-top: 0.25rem;">
+                        This email is used for notifications and login
+                    </small>
+                </div>
+                
+                <hr style="border: none; border-top: 1px solid var(--medium-grey); margin: 2rem 0;">
+                
+                <div style="margin-bottom: 1.5rem;">
+                    <label style="display: block; color: var(--silver); margin-bottom: 0.5rem; font-weight: 500;">
+                        Change Password (Optional)
+                    </label>
+                    <small style="color: var(--light-grey); display: block; margin-bottom: 1rem;">
+                        Leave blank to keep your current password
+                    </small>
+                    
+                    <div style="margin-bottom: 1rem;">
+                        {{ form.current_password.label(style="display: block; color: var(--silver); margin-bottom: 0.5rem;") }}
+                        {{ form.current_password(class="form-control", placeholder="Enter current password") }}
+                        {% if form.current_password.errors %}
+                            <small style="color: #dc3545;">{{ form.current_password.errors[0] }}</small>
+                        {% endif %}
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div>
+                            {{ form.new_password.label(style="display: block; color: var(--silver); margin-bottom: 0.5rem;") }}
+                            {{ form.new_password(class="form-control", placeholder="Enter new password") }}
+                            {% if form.new_password.errors %}
+                                <small style="color: #dc3545;">{{ form.new_password.errors[0] }}</small>
+                            {% endif %}
+                        </div>
+                        <div>
+                            {{ form.confirm_password.label(style="display: block; color: var(--silver); margin-bottom: 0.5rem;") }}
+                            {{ form.confirm_password(class="form-control", placeholder="Confirm new password") }}
+                            {% if form.confirm_password.errors %}
+                                <small style="color: #dc3545;">{{ form.confirm_password.errors[0] }}</small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+                    {{ form.submit(class="btn btn-primary") }}
+                    <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Additional Info Section -->
+    <div class="card">
+        <h3 class="card-header">Account Activity</h3>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div style="padding: 1rem; background: var(--medium-grey); border-radius: 4px;">
+                <small style="color: var(--silver);">Last Login</small>
+                <div style="color: var(--soft-white); font-size: 1.1rem; margin-top: 0.5rem;">
+                    {% if current_user.last_login %}
+                        {{ current_user.last_login.strftime('%B %d, %Y at %I:%M %p') }}
+                    {% else %}
+                        Never
+                    {% endif %}
+                </div>
+            </div>
+            <div style="padding: 1rem; background: var(--medium-grey); border-radius: 4px;">
+                <small style="color: var(--silver);">Last Login IP</small>
+                <div style="color: var(--soft-white); font-family: monospace; font-size: 1.1rem; margin-top: 0.5rem;">
+                    {{ current_user.last_login_ip or 'N/A' }}
+                </div>
+            </div>
+            <div style="padding: 1rem; background: var(--medium-grey); border-radius: 4px;">
+                <small style="color: var(--silver);">Account Status</small>
+                <div style="margin-top: 0.5rem;">
+                    {% if current_user.is_active %}
+                        <span class="badge badge-success" style="font-size: 1rem;">Active</span>
+                    {% else %}
+                        <span class="badge badge-danger" style="font-size: 1rem;">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

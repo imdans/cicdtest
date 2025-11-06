@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}MFA Verification{% endblock %}
+
+{% block content %}
+<div style="max-width: 500px; margin: 0 auto; padding-top: 3rem;">
+    <div class="card">
+        <h1 style="color: var(--silver); font-size: 1.5rem; margin-bottom: 1rem; text-align: center;">
+            Two-Factor Authentication
+        </h1>
+        
+        <p style="color: var(--light-grey); text-align: center; margin-bottom: 2rem;">
+            Enter the verification code from your authenticator app
+        </p>
+        
+        <form method="POST" action="{{ url_for('auth.verify_mfa') }}">
+            {{ form.hidden_tag() }}
+            
+            <div class="form-group">
+                {{ form.code.label }}
+                {{ form.code(class="form-control", placeholder="000000", maxlength="6", autofocus=true, style="text-align: center; font-size: 1.5rem; letter-spacing: 0.5rem;") }}
+                {% if form.code.errors %}
+                    <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                        {% for error in form.code.errors %}{{ error }}{% endfor %}
+                    </div>
+                {% endif %}
+            </div>
+            
+            <div style="margin-top: 2rem;">
+                {{ form.submit(class="btn btn-primary", style="width: 100%;") }}
+            </div>
+        </form>
+        
+        <div style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--medium-grey);">
+            <p style="color: var(--light-grey); margin-bottom: 0.5rem;">Having trouble?</p>
+            <a href="{{ url_for('auth.logout') }}" style="color: var(--silver); text-decoration: none;">
+                Back to login
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

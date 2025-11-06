@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Change Requests - CMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="card-header">Change Requests</h1>
+        <a href="{{ url_for('cr.create') }}" class="btn btn-primary">Create New Request</a>
+    </div>
+    
+    <!-- Project Filter -->
+    {% if user_projects %}
+    <div class="card" style="margin-bottom: 2rem;">
+        <form method="GET" style="display: flex; align-items: center; gap: 1rem;">
+            <label style="color: var(--silver); margin: 0;">Filter by Project:</label>
+            <select name="project_id" onchange="this.form.submit()" class="form-control" style="max-width: 300px;">
+                <option value="">All Projects</option>
+                {% for project in user_projects %}
+                <option value="{{ project.id }}" {% if request.args.get('project_id')|int == project.id %}selected{% endif %}>
+                    {{ project.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </form>
+    </div>
+    {% endif %}
+    
+    {% if change_requests and change_requests.items %}
+        <div class="card">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>CR Number</th>
+                        <th>Project</th>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>Priority</th>
+                        <th>Requester</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cr in change_requests.items %}
+                    <tr>
+                        <td><strong>{{ cr.cr_number }}</strong></td>
+                        <td>{{ cr.project.name if cr.project else 'N/A' }}</td>
+                        <td>
+                            <a href="{{ url_for('cr.view', cr_id=cr.id) }}" style="color: var(--silver); text-decoration: none;">
+                                {{ cr.title }}
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ cr.status.value }}">{{ cr.status.value }}</span>
+                        </td>
+                        <td>
+                            {% if cr.priority.value == 'critical' %}
+                                <span class="badge badge-danger">{{ cr.priority.value }}</span>
+                            {% elif cr.priority.value == 'high' %}
+                                <span class="badge badge-warning">{{ cr.priority.value }}</span>
+                            {% elif cr.priority.value == 'medium' %}
+                                <span class="badge badge-info">{{ cr.priority.value }}</span>
+                            {% else %}
+                                <span class="badge badge-secondary">{{ cr.priority.value }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ cr.requester.email if cr.requester else 'N/A' }}</td>
+                        <td>{{ cr.created_at | to_ist }}</td>
+                        <td>
+                            <a href="{{ url_for('cr.view', cr_id=cr.id) }}" class="btn btn-sm btn-info">View</a>
+                            {% if cr.can_edit(current_user) %}
+                            <a href="{{ url_for('cr.edit', cr_id=cr.id) }}" class="btn btn-sm btn-warning">Edit</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if change_requests.has_prev or change_requests.has_next %}
+        <div style="display: flex; justify-content: center; align-items: center; gap: 2rem; margin-top: 2rem;">
+            {% if change_requests.has_prev %}
+            <a href="{{ url_for('cr.list_change_requests', page=change_requests.prev_num, project_id=request.args.get('project_id', '')) }}" class="btn btn-secondary">Previous</a>
+            {% else %}
+            <span class="btn btn-secondary" style="opacity: 0.5; cursor: not-allowed;">Previous</span>
+            {% endif %}
+            
+            <span style="color: var(--silver);">Page {{ change_requests.page }} of {{ change_requests.pages }}</span>
+            
+            {% if change_requests.has_next %}
+            <a href="{{ url_for('cr.list_change_requests', page=change_requests.next_num, project_id=request.args.get('project_id', '')) }}" class="btn btn-secondary">Next</a>
+            {% else %}
+            <span class="btn btn-secondary" style="opacity: 0.5; cursor: not-allowed;">Next</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    {% else %}
+        <div class="card" style="text-align: center; padding: 3rem;">
+            <p style="color: var(--silver); font-size: 1.1rem; margin: 0;">No change requests found.</p>
+            <a href="{{ url_for('cr.create') }}" class="btn btn-primary" style="margin-top: 1.5rem;">Create Your First Request</a>
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

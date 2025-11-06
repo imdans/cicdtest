@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard - CMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="card-header" style="margin: 0;">Admin Dashboard</h1>
+        <form method="POST" action="{{ url_for('admin.trigger_sla_check') }}" style="display: inline;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="btn" style="background-color: #ffc107; color: #000;">
+                ⏰ Check SLA Deadlines Now
+            </button>
+        </form>
+    </div>
+    
+    <!-- Basic Stats -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+        <div class="card" style="background: linear-gradient(135deg, var(--medium-grey) 0%, var(--velvet-black) 100%); text-align: center; border: 1px solid var(--silver);">
+            <h3 style="margin: 0; font-size: 2.5em; color: var(--soft-white);">{{ stats.total_projects }}</h3>
+            <p style="margin: 0.5rem 0 0 0; color: var(--silver);">All Active Projects</p>
+        </div>
+        <div class="card" style="background: linear-gradient(135deg, var(--dark-grey) 0%, var(--medium-grey) 100%); text-align: center; border: 1px solid var(--silver);">
+            <h3 style="margin: 0; font-size: 2.5em; color: var(--soft-white);">{{ stats.my_projects }}</h3>
+            <p style="margin: 0.5rem 0 0 0; color: var(--silver);">My Projects</p>
+        </div>
+        <div class="card" style="background: linear-gradient(135deg, var(--velvet-black) 0%, var(--dark-grey) 100%); text-align: center; border: 1px solid var(--silver);">
+            <h3 style="margin: 0; font-size: 2.5em; color: var(--soft-white);">{{ stats.total_users }}</h3>
+            <p style="margin: 0.5rem 0 0 0; color: var(--silver);">Active Users</p>
+        </div>
+        <div class="card" style="background: linear-gradient(135deg, var(--medium-grey) 0%, var(--dark-grey) 100%); text-align: center; border: 1px solid var(--silver);">
+            <h3 style="margin: 0; font-size: 2.5em; color: var(--soft-white);">{{ stats.total_crs }}</h3>
+            <p style="margin: 0.5rem 0 0 0; color: var(--silver);">Total CRs</p>
+        </div>
+        <div class="card" style="background: linear-gradient(135deg, var(--dark-grey) 0%, var(--velvet-black) 100%); text-align: center; border: 1px solid var(--silver);">
+            <h3 style="margin: 0; font-size: 2.5em; color: var(--soft-white);">{{ stats.unassigned_users }}</h3>
+            <p style="margin: 0.5rem 0 0 0; color: var(--silver);">Unassigned Users</p>
+        </div>
+    </div>
+    
+    <!-- CR Statistics Dashboard -->
+    <div style="margin-bottom: 3rem;">
+        <h2 class="card-header">Change Request Statistics</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+            <div class="card" style="border-left: 4px solid var(--accent-silver);">
+                <h4 style="margin: 0; color: var(--accent-silver);">Pending</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0; color: var(--soft-white); font-weight: bold;">{{ cr_stats.pending }}</p>
+                <small style="color: var(--silver);">Draft + Submitted + Pending Approval</small>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--light-grey);">
+                <h4 style="margin: 0; color: var(--silver);">Approved</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0; color: var(--soft-white); font-weight: bold;">{{ cr_stats.approved }}</p>
+                <small style="color: var(--silver);">Ready for Implementation</small>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--medium-grey);">
+                <h4 style="margin: 0; color: var(--silver);">In Progress</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0; color: var(--soft-white); font-weight: bold;">{{ cr_stats.in_progress }}</p>
+                <small style="color: var(--silver);">Currently Being Implemented</small>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--silver);">
+                <h4 style="margin: 0; color: var(--silver);">Implemented</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0; color: var(--soft-white); font-weight: bold;">{{ cr_stats.implemented }}</p>
+                <small style="color: var(--silver);">Awaiting Closure</small>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--silver);">
+                <h4 style="margin: 0; color: var(--silver);">Closed</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0; color: var(--soft-white); font-weight: bold;">{{ cr_stats.closed }}</p>
+                <small style="color: var(--silver);">Successfully Completed</small>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--silver);">
+                <h4 style="margin: 0; color: var(--silver);">Rejected</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0; color: var(--soft-white); font-weight: bold;">{{ cr_stats.rejected }}</p>
+                <small style="color: var(--silver);">Not Approved</small>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--light-grey);">
+                <h4 style="margin: 0; color: var(--light-grey);">Rolled Back</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0; color: var(--soft-white); font-weight: bold;">{{ cr_stats.rolled_back }}</p>
+                <small style="color: var(--silver);">Reverted Changes</small>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--silver);">
+                <h4 style="margin: 0; color: var(--silver);">SLA Breached</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0; color: var(--soft-white); font-weight: bold;">{{ cr_stats.sla_breached }}</p>
+                <small style="color: var(--silver);">Past Deadline</small>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Priority Breakdown -->
+    <div style="margin-bottom: 3rem;">
+        <h2 class="card-header">Priority Breakdown</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+            <div class="card" style="border-left: 4px solid var(--silver);">
+                <h4 style="margin: 0; color: var(--silver);">Critical</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0 0 0; color: var(--soft-white); font-weight: bold;">{{ priority_stats.critical }}</p>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--accent-silver);">
+                <h4 style="margin: 0; color: var(--accent-silver);">High</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0 0 0; color: var(--soft-white); font-weight: bold;">{{ priority_stats.high }}</p>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--light-grey);">
+                <h4 style="margin: 0; color: var(--light-grey);">Medium</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0 0 0; color: var(--soft-white); font-weight: bold;">{{ priority_stats.medium }}</p>
+            </div>
+            <div class="card" style="border-left: 4px solid var(--medium-grey);">
+                <h4 style="margin: 0; color: var(--medium-grey);">Low</h4>
+                <p style="font-size: 2.5em; margin: 0.5rem 0 0 0; color: var(--soft-white); font-weight: bold;">{{ priority_stats.low }}</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- My Projects Analytics -->
+    {% if my_project_analytics %}
+    <div style="margin-bottom: 3rem;">
+        <h2 class="card-header">My Projects Analytics</h2>
+        <div class="card" style="margin-top: 1.5rem;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th style="text-align: center;">Total CRs</th>
+                        <th style="text-align: center;">Pending</th>
+                        <th style="text-align: center;">Approved</th>
+                        <th style="text-align: center;">Closed</th>
+                        <th style="text-align: center;">Members</th>
+                        <th style="text-align: center;">SLA Breached</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+            <tbody>
+                {% for analytics in my_project_analytics %}
+                <tr>
+                    <td><strong>{{ analytics.project.code }}</strong> - {{ analytics.project.name }}</td>
+                    <td style="text-align: center;"><span class="badge badge-info">{{ analytics.total_crs }}</span></td>
+                    <td style="text-align: center;"><span class="badge badge-warning">{{ analytics.pending }}</span></td>
+                    <td style="text-align: center;"><span class="badge badge-primary">{{ analytics.approved }}</span></td>
+                    <td style="text-align: center;"><span class="badge badge-success">{{ analytics.closed }}</span></td>
+                    <td style="text-align: center;">{{ analytics.members }} users</td>
+                    <td style="text-align: center;">
+                        {% if analytics.sla_breached > 0 %}
+                        <span class="badge badge-danger">{{ analytics.sla_breached }}</span>
+                        {% else %}
+                        <span class="badge badge-success">0</span>
+                        {% endif %}
+                    </td>
+                    <td><a href="{{ url_for('admin.project_detail', project_id=analytics.project.id) }}" class="btn btn-sm btn-info">View Details</a></td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% endif %}
+    
+    <div style="margin-bottom: 3rem;">
+        <h2 class="card-header">Quick Actions</h2>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 1.5rem;">
+            <a href="{{ url_for('admin.create_project') }}" class="btn btn-primary">Create New Project</a>
+            <a href="{{ url_for('admin.projects') }}" class="btn btn-secondary">Manage Projects</a>
+            <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">Create New User</a>
+            <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Manage Users</a>
+            <a href="{{ url_for('admin.reports') }}" class="btn btn-info">View Reports</a>
+        </div>
+    </div>
+    
+    <div style="margin-bottom: 3rem;">
+        <h2 class="card-header">Recent Projects</h2>
+        {% if recent_projects %}
+        <div class="card" style="margin-top: 1.5rem;">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Status</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in recent_projects %}
+                <tr>
+                    <td>{{ project.code }}</td>
+                    <td>{{ project.name }}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if project.is_active else 'danger' }}">
+                            {{ 'Active' if project.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td>{{ project.created_at | to_ist }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.project_detail', project_id=project.id) }}" class="btn btn-sm btn-info">View</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        </div>
+        {% else %}
+        <div class="card" style="text-align: center; padding: 3rem; margin-top: 1.5rem;">
+            <p style="color: var(--silver); margin: 0;">No projects yet.</p>
+        </div>
+        {% endif %}
+    </div>
+    
+    <!-- Closed CRs with Timeline Details -->
+    <div style="margin-bottom: 3rem;">
+        <h2 class="card-header">Recently Closed Change Requests</h2>
+        {% if closed_cr_metrics %}
+        <div class="card" style="margin-top: 1.5rem;">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>CR Number</th>
+                        <th>Title</th>
+                        <th>Project</th>
+                        <th>Priority</th>
+                        <th>Total Time</th>
+                        <th>SLA Status</th>
+                        <th>Closed By</th>
+                        <th>Closed Date</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for metric in closed_cr_metrics %}
+                    <tr>
+                        <td>
+                            <strong style="color: var(--silver);">{{ metric.cr.cr_number }}</strong>
+                        </td>
+                        <td>
+                            <span title="{{ metric.cr.title }}">
+                                {{ metric.cr.title[:50] }}{% if metric.cr.title|length > 50 %}...{% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <small style="color: var(--silver);">{{ metric.cr.project.code }}</small>
+                        </td>
+                        <td>
+                            <span class="badge badge-{{ 'danger' if metric.cr.priority.value == 'critical' else 'warning' if metric.cr.priority.value == 'high' else 'info' if metric.cr.priority.value == 'medium' else 'secondary' }}">
+                                {{ metric.cr.priority.value.upper() }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if metric.total_time %}
+                            <span style="font-family: monospace; color: var(--silver);">{{ metric.total_time }}</span>
+                            {% else %}
+                            <span style="color: var(--light-grey);">N/A</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if metric.sla_met is not none %}
+                                {% if metric.sla_met %}
+                                <span class="badge badge-success">Met</span>
+                                {% else %}
+                                <span class="badge badge-danger">Breached</span>
+                                {% endif %}
+                            {% else %}
+                            <span class="badge badge-secondary">No SLA</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>{{ metric.cr.closed_by.username if metric.cr.closed_by else 'N/A' }}</small>
+                        </td>
+                        <td>
+                            <small>{{ metric.cr.closed_date.strftime('%Y-%m-%d %H:%M') if metric.cr.closed_date else 'N/A' }}</small>
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-info" onclick="toggleTimeline({{ metric.cr.id }})">
+                                Timeline
+                            </button>
+                            <a href="{{ url_for('cr.view', cr_id=metric.cr.id) }}" class="btn btn-sm btn-secondary" target="_blank">
+                                View
+                            </a>
+                        </td>
+                    </tr>
+                    <tr id="timeline-{{ metric.cr.id }}" style="display: none; background: var(--dark-grey);">
+                        <td colspan="9" style="padding: 2rem;">
+                            <div style="max-width: 900px;">
+                                <h4 style="color: var(--silver); margin-bottom: 1.5rem;">
+                                    Complete Timeline for {{ metric.cr.cr_number }}
+                                </h4>
+                                <div style="position: relative; padding-left: 30px;">
+                                    {% for event_name, event_data in metric.timeline.items() %}
+                                    {% if event_data %}
+                                    <div style="position: relative; margin-bottom: 1.5rem; padding-bottom: 1.5rem; border-left: 2px solid var(--medium-grey);">
+                                        <div style="position: absolute; left: -8px; top: 0; width: 14px; height: 14px; border-radius: 50%; background: var(--silver);"></div>
+                                        <div style="padding-left: 20px;">
+                                            <strong style="color: var(--soft-white);">{{ event_name | title }}</strong>
+                                            <br>
+                                            <small style="color: var(--silver);">
+                                                {{ event_data.date.strftime('%Y-%m-%d %H:%M:%S') if event_data.date else 'N/A' }}
+                                                {% if event_data.user %} by {{ event_data.user }}{% endif %}
+                                            </small>
+                                        </div>
+                                    </div>
+                                    {% endif %}
+                                    {% endfor %}
+                                </div>
+                                {% if metric.cr.closure_notes %}
+                                <div style="margin-top: 2rem; padding: 1.5rem; background: var(--medium-grey); border-left: 4px solid var(--accent-silver); border-radius: 4px;">
+                                    <strong style="color: var(--soft-white);">Closure Notes:</strong>
+                                    <p style="margin: 0.5rem 0 0 0; color: var(--silver);">{{ metric.cr.closure_notes }}</p>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="card" style="text-align: center; padding: 3rem; margin-top: 1.5rem;">
+            <p style="color: var(--silver); font-size: 1.1rem; margin: 0;">No closed change requests yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+function toggleTimeline(crId) {
+    const timeline = document.getElementById('timeline-' + crId);
+    if (timeline.style.display === 'none') {
+        timeline.style.display = 'table-row';
+    } else {
+        timeline.style.display = 'none';
+    }
+}
+</script>
+
+{% endblock %}
+

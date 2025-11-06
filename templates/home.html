@@ -1,5 +1,194 @@
 {% extends 'base.html' %}
+{% block title %}Home - Change Management System{% endblock %}
 
 {% block content %}
-    <h1>{% block title %} Welcome to your Flask app! {% endblock %}</h1>
+<div style="max-width: 1200px; margin: 0 auto;">
+    <!-- Hero Section -->
+    <div class="card" style="text-align: center; margin-bottom: 2rem;">
+        <h1 style="color: var(--soft-white); font-size: 2.5rem; margin-bottom: 1rem;">
+            Change Management System
+        </h1>
+        <p style="color: var(--silver); font-size: 1.2rem; margin-bottom: 0;">
+            Streamline your organizational change processes with comprehensive tracking, approval workflows, and compliance management
+        </p>
+    </div>
+
+    <!-- Features Grid -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+        <div class="card">
+            <h3 style="color: var(--silver); margin-bottom: 1rem;">Role-Based Access</h3>
+            <p style="color: var(--light-grey);">
+                Four distinct roles (Admin, Approver, Implementer, Requester) with granular permissions for secure access control
+            </p>
+        </div>
+        
+        <div class="card">
+            <h3 style="color: var(--silver); margin-bottom: 1rem;">Project Management</h3>
+            <p style="color: var(--light-grey);">
+                Organize change requests by projects with unique codes, member assignments, and comprehensive activity tracking
+            </p>
+        </div>
+        
+        <div class="card">
+            <h3 style="color: var(--silver); margin-bottom: 1rem;">Full Audit Trail</h3>
+            <p style="color: var(--light-grey);">
+                Complete logging of all actions with timestamps, user information, and context for compliance reporting
+            </p>
+        </div>
+        
+        <div class="card">
+            <h3 style="color: var(--silver); margin-bottom: 1rem;">SLA Monitoring</h3>
+            <p style="color: var(--light-grey);">
+                Priority-based service level agreements with automated tracking, breach detection, and escalation alerts
+            </p>
+        </div>
+        
+        <div class="card">
+            <h3 style="color: var(--silver); margin-bottom: 1rem;">Email Notifications</h3>
+            <p style="color: var(--light-grey);">
+                Real-time alerts for status changes, approvals, assignments, and critical events throughout the workflow
+            </p>
+        </div>
+        
+        <div class="card">
+            <h3 style="color: var(--silver); margin-bottom: 1rem;">MFA Security</h3>
+            <p style="color: var(--light-grey);">
+                Enhanced security with optional multi-factor authentication using time-based one-time passwords
+            </p>
+        </div>
+    </div>
+
+    <!-- Workflow -->
+    <div class="card" style="margin-bottom: 3rem;">
+        <h2 style="color: var(--soft-white); margin-bottom: 1.5rem; text-align: center;">Change Request Workflow</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem;">
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; color: var(--silver); margin-bottom: 0.5rem;">1</div>
+                <h4 style="color: var(--silver); margin-bottom: 0.5rem;">Submit</h4>
+                <p style="color: var(--light-grey); font-size: 0.9rem;">Create request with details</p>
+            </div>
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; color: var(--silver); margin-bottom: 0.5rem;">2</div>
+                <h4 style="color: var(--silver); margin-bottom: 0.5rem;">Review</h4>
+                <p style="color: var(--light-grey); font-size: 0.9rem;">Approver evaluates request</p>
+            </div>
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; color: var(--silver); margin-bottom: 0.5rem;">3</div>
+                <h4 style="color: var(--silver); margin-bottom: 0.5rem;">Implement</h4>
+                <p style="color: var(--light-grey); font-size: 0.9rem;">Execute approved change</p>
+            </div>
+            <div style="text-align: center; padding: 1rem;">
+                <div style="font-size: 2rem; color: var(--silver); margin-bottom: 0.5rem;">4</div>
+                <h4 style="color: var(--silver); margin-bottom: 0.5rem;">Verify</h4>
+                <p style="color: var(--light-grey); font-size: 0.9rem;">Confirm implementation</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Roles -->
+    <div style="margin-bottom: 3rem;">
+        <h2 style="color: var(--soft-white); margin-bottom: 1.5rem; text-align: center;">User Roles & Responsibilities</h2>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem;">
+            <div class="card" style="border-left: 4px solid #dc3545;">
+                <h3 style="color: var(--silver); margin-bottom: 1rem;">Admin</h3>
+                <p style="color: var(--light-grey); margin-bottom: 0.5rem;">
+                    <strong style="color: var(--silver);">Full System Control:</strong> Manage users, projects, and system configuration
+                </p>
+                <ul style="color: var(--light-grey); padding-left: 1.5rem; margin: 0.5rem 0;">
+                    <li>Create and manage projects</li>
+                    <li>Assign users to roles and projects</li>
+                    <li>View comprehensive analytics</li>
+                    <li>Monitor SLA compliance</li>
+                    <li>Access complete audit trail</li>
+                </ul>
+            </div>
+            
+            <div class="card" style="border-left: 4px solid #ffc107;">
+                <h3 style="color: var(--silver); margin-bottom: 1rem;">Approver</h3>
+                <p style="color: var(--light-grey); margin-bottom: 0.5rem;">
+                    <strong style="color: var(--silver);">Review & Decision Authority:</strong> Evaluate and approve/reject change requests
+                </p>
+                <ul style="color: var(--light-grey); padding-left: 1.5rem; margin: 0.5rem 0;">
+                    <li>Review pending change requests</li>
+                    <li>Approve or reject with feedback</li>
+                    <li>Close completed changes</li>
+                    <li>Monitor implementation progress</li>
+                    <li>Ensure compliance with standards</li>
+                </ul>
+            </div>
+            
+            <div class="card" style="border-left: 4px solid #17a2b8;">
+                <h3 style="color: var(--silver); margin-bottom: 1rem;">Implementer</h3>
+                <p style="color: var(--light-grey); margin-bottom: 0.5rem;">
+                    <strong style="color: var(--silver);">Execution Specialist:</strong> Execute approved changes and provide updates
+                </p>
+                <ul style="color: var(--light-grey); padding-left: 1.5rem; margin: 0.5rem 0;">
+                    <li>View assigned change requests</li>
+                    <li>Execute approved changes</li>
+                    <li>Update implementation status</li>
+                    <li>Document technical details</li>
+                    <li>Report completion or issues</li>
+                </ul>
+            </div>
+            
+            <div class="card" style="border-left: 4px solid #28a745;">
+                <h3 style="color: var(--silver); margin-bottom: 1rem;">Requester</h3>
+                <p style="color: var(--light-grey); margin-bottom: 0.5rem;">
+                    <strong style="color: var(--silver);">Change Initiator:</strong> Submit and track change requests
+                </p>
+                <ul style="color: var(--light-grey); padding-left: 1.5rem; margin: 0.5rem 0;">
+                    <li>Create new change requests</li>
+                    <li>Attach supporting documents</li>
+                    <li>Track request progress</li>
+                    <li>Edit pending requests</li>
+                    <li>Verify completed changes</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA -->
+    <div class="card" style="text-align: center;">
+        {% if current_user.is_authenticated %}
+            <h2 style="color: var(--soft-white); margin-bottom: 1rem;">
+                Welcome, {{ current_user.first_name or current_user.username }}
+            </h2>
+            <p style="color: var(--silver); margin-bottom: 1.5rem;">
+                {% if current_user.role == 'Admin' %}
+                    Access your administrative dashboard to manage the entire system
+                {% elif current_user.role == 'Approver' %}
+                    Review and make decisions on pending change requests
+                {% elif current_user.role == 'Implementer' %}
+                    View your assigned changes and update implementation progress
+                {% else %}
+                    Create new change requests and monitor their progress
+                {% endif %}
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                {% if current_user.role == 'Admin' %}
+                    <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary">View Dashboard</a>
+                    <a href="{{ url_for('cr.list_change_requests') }}" class="btn btn-secondary">View Change Requests</a>
+                {% elif current_user.role == 'Approver' %}
+                    <a href="{{ url_for('cr.list_change_requests') }}" class="btn btn-primary">View Change Requests</a>
+                    <a href="{{ url_for('audit.logs') }}" class="btn btn-secondary">View Audit Logs</a>
+                {% elif current_user.role == 'Implementer' %}
+                    <a href="{{ url_for('cr.list_change_requests') }}" class="btn btn-primary">View Change Requests</a>
+                    <a href="{{ url_for('auth.profile') }}" class="btn btn-secondary">My Profile</a>
+                {% else %}
+                    <a href="{{ url_for('cr.list_change_requests') }}" class="btn btn-primary">View Change Requests</a>
+                    <a href="{{ url_for('cr.create') }}" class="btn btn-secondary">Create Request</a>
+                {% endif %}
+            </div>
+        {% else %}
+            <h2 style="color: var(--soft-white); margin-bottom: 1rem;">Get Started</h2>
+            <p style="color: var(--silver); margin-bottom: 1.5rem;">
+                Log in to access the change management system
+            </p>
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="{{ url_for('auth.login') }}" class="btn btn-primary">Login</a>
+                <a href="{{ url_for('about') }}" class="btn btn-secondary">Learn More</a>
+            </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Report - {{ project_report.project.name }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1cm;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: white;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 3px solid #2c3e50;
+            padding-bottom: 20px;
+        }
+        
+        .header h1 {
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+            font-size: 28px;
+        }
+        
+        .header .project-info {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .header .date {
+            color: #999;
+            font-size: 12px;
+            margin-top: 10px;
+        }
+        
+        .section {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+        }
+        
+        .section-title {
+            color: #2c3e50;
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #3498db;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .metric-card {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            text-align: center;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        
+        .metric-value {
+            font-size: 28px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .status-grid, .priority-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .status-card, .priority-card {
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 12px;
+            text-align: center;
+        }
+        
+        .card-label {
+            font-size: 11px;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .card-value {
+            font-size: 20px;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+            font-size: 12px;
+        }
+        
+        table thead {
+            background: #2c3e50;
+            color: white;
+        }
+        
+        table th {
+            padding: 10px;
+            text-align: left;
+            font-weight: 600;
+            text-transform: uppercase;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        
+        table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        table tbody tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+        
+        table tbody tr:hover {
+            background: #e9ecef;
+        }
+        
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #6c757d;
+            color: white;
+        }
+        
+        .text-success {
+            color: #28a745;
+            font-weight: bold;
+        }
+        
+        .text-danger {
+            color: #dc3545;
+            font-weight: bold;
+        }
+        
+        .text-warning {
+            color: #ffc107;
+            font-weight: bold;
+        }
+        
+        .text-info {
+            color: #17a2b8;
+            font-weight: bold;
+        }
+        
+        .footer {
+            margin-top: 40px;
+            text-align: center;
+            font-size: 11px;
+            color: #999;
+            border-top: 1px solid #ddd;
+            padding-top: 15px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>Project Report</h1>
+        <div class="project-info">
+            <strong>{{ project_report.project.name }}</strong> ({{ project_report.project.code }})
+        </div>
+        <div class="date">Report Generated: {{ current_date }}</div>
+    </div>
+
+    <!-- Key Metrics -->
+    <div class="section">
+        <h2 class="section-title">Key Metrics</h2>
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Total CRs</div>
+                <div class="metric-value text-success">{{ project_report.total_crs }}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Team Members</div>
+                <div class="metric-value text-info">{{ project_report.member_performance|length }}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">SLA Compliance</div>
+                <div class="metric-value text-success">{{ project_report.sla_compliance_rate }}</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">SLA Breaches</div>
+                <div class="metric-value {% if project_report.sla_breached_count > 0 %}text-danger{% else %}text-success{% endif %}">
+                    {{ project_report.sla_breached_count }}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Status Distribution -->
+    <div class="section">
+        <h2 class="section-title">Status Distribution</h2>
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="card-label">Draft</div>
+                <div class="card-value">{{ project_report.status_counts['DRAFT'] }}</div>
+            </div>
+            <div class="status-card">
+                <div class="card-label">Submitted</div>
+                <div class="card-value">{{ project_report.status_counts['SUBMITTED'] }}</div>
+            </div>
+            <div class="status-card">
+                <div class="card-label">Pending</div>
+                <div class="card-value">{{ project_report.status_counts['PENDING_APPROVAL'] }}</div>
+            </div>
+            <div class="status-card">
+                <div class="card-label">Approved</div>
+                <div class="card-value">{{ project_report.status_counts['APPROVED'] }}</div>
+            </div>
+            <div class="status-card">
+                <div class="card-label">In Progress</div>
+                <div class="card-value">{{ project_report.status_counts['IN_PROGRESS'] }}</div>
+            </div>
+            <div class="status-card">
+                <div class="card-label">Implemented</div>
+                <div class="card-value">{{ project_report.status_counts['IMPLEMENTED'] }}</div>
+            </div>
+            <div class="status-card">
+                <div class="card-label">Closed</div>
+                <div class="card-value">{{ project_report.status_counts['CLOSED'] }}</div>
+            </div>
+            <div class="status-card">
+                <div class="card-label">Rejected</div>
+                <div class="card-value">{{ project_report.status_counts['REJECTED'] }}</div>
+            </div>
+            <div class="status-card">
+                <div class="card-label">Rolled Back</div>
+                <div class="card-value">{{ project_report.status_counts['ROLLED_BACK'] }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Priority Distribution -->
+    <div class="section">
+        <h2 class="section-title">Priority Distribution</h2>
+        <div class="priority-grid">
+            <div class="priority-card">
+                <div class="card-label">Critical</div>
+                <div class="card-value text-danger">{{ project_report.priority_counts['CRITICAL'] }}</div>
+            </div>
+            <div class="priority-card">
+                <div class="card-label">High</div>
+                <div class="card-value text-warning">{{ project_report.priority_counts['HIGH'] }}</div>
+            </div>
+            <div class="priority-card">
+                <div class="card-label">Medium</div>
+                <div class="card-value text-info">{{ project_report.priority_counts['MEDIUM'] }}</div>
+            </div>
+            <div class="priority-card">
+                <div class="card-label">Low</div>
+                <div class="card-value text-success">{{ project_report.priority_counts['LOW'] }}</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Team Performance -->
+    <div class="section">
+        <h2 class="section-title">Team Performance Analysis</h2>
+        {% if project_report.member_performance %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Member</th>
+                    <th>Role</th>
+                    <th style="text-align: center;">Created</th>
+                    <th style="text-align: center;">Approved</th>
+                    <th style="text-align: center;">Implemented</th>
+                    <th style="text-align: center;">Avg Time</th>
+                    <th style="text-align: center;">Approval Rate</th>
+                    <th style="text-align: center;">SLA Breaches</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for member in project_report.member_performance %}
+                <tr>
+                    <td>
+                        <strong>{{ member.user.full_name }}</strong><br>
+                        <small style="color: #666;">{{ member.user.email }}</small>
+                    </td>
+                    <td><span class="badge">{{ member.role }}</span></td>
+                    <td style="text-align: center;">{{ member.crs_created }}</td>
+                    <td style="text-align: center;">{{ member.crs_approved }}</td>
+                    <td style="text-align: center;">{{ member.crs_implemented }}</td>
+                    <td style="text-align: center;">{{ member.avg_resolution_time or 'N/A' }}</td>
+                    <td style="text-align: center;">{{ member.approval_rate or 'N/A' }}</td>
+                    <td style="text-align: center;">
+                        {% if member.sla_breached > 0 %}
+                        <span class="text-danger">{{ member.sla_breached }}</span>
+                        {% else %}
+                        <span class="text-success">0</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <p style="color: #666; text-align: center; padding: 20px;">No team members assigned to this project</p>
+        {% endif %}
+    </div>
+
+    <div class="footer">
+        Generated by Change Management System | {{ current_date }}
+    </div>
+</body>
+</html>

@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}Create User - Admin{% endblock %}
+
+{% block content %}
+<div style="max-width: 700px; margin: 0 auto;">
+    <h1 class="card-header" style="margin-bottom: 2rem;">Create New User</h1>
+    
+    <div class="alert alert-info" style="margin-bottom: 2rem;">
+        <p style="margin: 0;">
+            <strong>Invitation System:</strong> An invitation email will be sent to the user with their account details and setup instructions. 
+            The user must accept the invitation and set their password to activate the account.
+        </p>
+    </div>
+    
+    <div class="card">
+    <form method="POST" action="{{ url_for('admin.create_user') }}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+        
+        <div class="form-group">
+            <label for="email">Email <span style="color: var(--silver);">*</span></label>
+            <input type="email" name="email" id="email" class="form-control" required>
+            <small style="color: var(--silver);">User will receive invitation at this email address</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="username">Username</label>
+            <input type="text" name="username" id="username" class="form-control">
+            <small style="color: var(--silver);">Optional - will be auto-generated from email if not provided</small>
+        </div>
+        
+        <div class="form-group">
+            <label for="first_name">First Name</label>
+            <input type="text" name="first_name" id="first_name" class="form-control">
+        </div>
+        
+        <div class="form-group">
+            <label for="last_name">Last Name</label>
+            <input type="text" name="last_name" id="last_name" class="form-control">
+        </div>
+        
+        <div class="form-group">
+            <label for="role_id">Role <span style="color: var(--silver);">*</span></label>
+            <select name="role_id" id="role_id" class="form-control" required onchange="toggleMFANote()">
+                <option value="">Select Role</option>
+                {% for role in roles %}
+                <option value="{{ role.id }}" data-role-name="{{ role.name }}">{{ role.name|title }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        
+        <div id="mfaNote" class="alert alert-warning" style="display: none; margin: 1.5rem 0;">
+            <p style="margin: 0;">
+                <strong>Security Note:</strong> Multi-Factor Authentication (MFA) will be automatically enabled for admin users. 
+                They will receive a QR code in their invitation email to set up their authenticator app.
+            </p>
+        </div>
+        
+        <div class="form-group" style="display: flex; gap: 1rem;">
+            <button type="submit" class="btn btn-primary">Create User & Send Invitation</button>
+            <a href="{{ url_for('admin.users') }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+    </div>
+</div>
+</div>
+
+<script>
+function toggleMFANote() {
+    const roleSelect = document.getElementById('role_id');
+    const selectedOption = roleSelect.options[roleSelect.selectedIndex];
+    const roleName = selectedOption.getAttribute('data-role-name');
+    const mfaNote = document.getElementById('mfaNote');
+    
+    console.log('Role changed:', roleName);
+    
+    // Show MFA note only for admin role
+    if (roleName && roleName.toLowerCase() === 'admin') {
+        console.log('Showing MFA note');
+        mfaNote.style.display = 'block';
+    } else {
+        console.log('Hiding MFA note');
+        mfaNote.style.display = 'none';
+    }
+}
+
+// Check on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, checking role');
+    toggleMFANote();
+});
+</script>
+{% endblock %}

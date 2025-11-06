@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+{% block title %}Project Reports - Admin{% endblock %}
+
+{% block content %}
+<div style="max-width: 1600px; margin: 0 auto; padding: 0 1rem;">
+    <!-- Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="card-header" style="margin: 0;">Project Reports & Analytics</h1>
+    </div>
+    
+    <!-- Project Selection Card -->
+    <div class="card" style="margin-bottom: 2rem; background: linear-gradient(135deg, #1a1a1a 0%, #252525 100%);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 2rem; flex-wrap: wrap;">
+            <div style="flex: 1; min-width: 300px;">
+                <h3 style="color: var(--silver); font-size: 1.1rem; margin-bottom: 1rem; font-weight: 600;">Select Project</h3>
+                <form method="GET" style="display: flex; gap: 1rem; align-items: flex-end;">
+                    <div style="flex: 1;">
+                        <select name="project_id" class="form-control" onchange="this.form.submit()" style="background: var(--velvet-black); border: 1px solid var(--grey); color: var(--silver); padding: 0.75rem;">
+                            <option value="">-- Choose Project --</option>
+                            {% for project in projects %}
+                            <option value="{{ project.id }}" {% if selected_project and selected_project.id == project.id %}selected{% endif %}>
+                                {{ project.name }} ({{ project.code }})
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    {% if selected_project %}
+                    <a href="{{ url_for('admin.reports') }}" class="btn btn-secondary" style="white-space: nowrap;">Clear</a>
+                    {% endif %}
+                </form>
+            </div>
+            
+            {% if selected_project %}
+            <div style="display: flex; gap: 1rem; align-items: flex-end;">
+                <button onclick="window.print()" class="btn btn-primary" style="white-space: nowrap;">
+                    <span style="margin-right: 0.5rem;">🖨️</span> Print Report
+                </button>
+                <button onclick="generatePDF()" class="btn btn-success" style="white-space: nowrap;">
+                    <span style="margin-right: 0.5rem;">📄</span> Export PDF
+                </button>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if project_report %}
+    <!-- Detailed Project Report -->
+    <div id="report-content">
+        <!-- Project Header -->
+        <div class="card" style="margin-bottom: 1.5rem; background: linear-gradient(135deg, #2a2a2a 0%, #1a1a1a 100%); border-left: 4px solid var(--silver);">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="color: var(--silver); font-size: 1.8rem; margin: 0; font-weight: 700;">
+                        {{ project_report.project.name }}
+                    </h2>
+                    <p style="color: var(--grey); margin: 0.5rem 0 0 0; font-size: 1rem;">
+                        Project Code: <span style="color: var(--silver); font-weight: 600;">{{ project_report.project.code }}</span>
+                    </p>
+                </div>
+                <div style="text-align: right;">
+                    <div style="color: var(--grey); font-size: 0.9rem;">Report Generated</div>
+                    <div style="color: var(--silver); font-weight: 600;">{{ current_date }}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Key Metrics Grid -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <div class="card" style="background: linear-gradient(135deg, #1a4d2e 0%, #0d2818 100%); border: none; padding: 1.5rem;">
+                <div style="color: #90ee90; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Total Change Requests</div>
+                <div style="color: var(--silver); font-size: 2.5rem; font-weight: 700;">{{ project_report.total_crs }}</div>
+            </div>
+            
+            <div class="card" style="background: linear-gradient(135deg, #1a3a52 0%, #0d1d29 100%); border: none; padding: 1.5rem;">
+                <div style="color: #87ceeb; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">Team Members</div>
+                <div style="color: var(--silver); font-size: 2.5rem; font-weight: 700;">{{ project_report.member_count }}</div>
+            </div>
+            
+            <div class="card" style="background: linear-gradient(135deg, #2d4a1c 0%, #1a2d11 100%); border: none; padding: 1.5rem;">
+                <div style="color: #98fb98; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">SLA Compliance</div>
+                <div style="color: var(--silver); font-size: 2.5rem; font-weight: 700;">{{ project_report.sla_compliance_rate }}</div>
+            </div>
+            
+            <div class="card" style="background: linear-gradient(135deg, #4a1c1c 0%, #2d1111 100%); border: none; padding: 1.5rem;">
+                <div style="color: #ffb6c1; font-size: 0.85rem; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 0.5rem;">SLA Breaches</div>
+                <div style="color: {% if project_report.sla_breached_count > 0 %}#dc3545{% else %}#28a745{% endif %}; font-size: 2.5rem; font-weight: 700;">{{ project_report.sla_breached_count }}</div>
+            </div>
+        </div>
+        
+        <!-- Status & Priority Analysis -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+            <!-- Status Breakdown -->
+            <div class="card">
+                <h3 style="color: var(--silver); font-size: 1.2rem; margin-bottom: 1.5rem; font-weight: 600; border-bottom: 2px solid var(--grey); padding-bottom: 0.75rem;">Status Distribution</h3>
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                    <div style="text-align: center; padding: 1rem; background: rgba(108,117,125,0.1); border-radius: 8px;">
+                        <div style="color: var(--grey); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Draft</div>
+                        <div style="color: var(--silver); font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">{{ project_report.status_counts.draft }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(108,117,125,0.1); border-radius: 8px;">
+                        <div style="color: var(--grey); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Submitted</div>
+                        <div style="color: var(--silver); font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">{{ project_report.status_counts.submitted }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(255,193,7,0.1); border-radius: 8px;">
+                        <div style="color: #ffc107; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Pending</div>
+                        <div style="color: #ffc107; font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">{{ project_report.status_counts.pending }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(40,167,69,0.1); border-radius: 8px;">
+                        <div style="color: #28a745; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Approved</div>
+                        <div style="color: #28a745; font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">{{ project_report.status_counts.approved }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(0,123,255,0.1); border-radius: 8px;">
+                        <div style="color: #007bff; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">In Progress</div>
+                        <div style="color: #007bff; font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">{{ project_report.status_counts.in_progress }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(23,162,184,0.1); border-radius: 8px;">
+                        <div style="color: #17a2b8; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Implemented</div>
+                        <div style="color: #17a2b8; font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">{{ project_report.status_counts.implemented }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(40,167,69,0.1); border-radius: 8px;">
+                        <div style="color: #28a745; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Closed</div>
+                        <div style="color: #28a745; font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">{{ project_report.status_counts.closed }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(220,53,69,0.1); border-radius: 8px;">
+                        <div style="color: #dc3545; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Rejected</div>
+                        <div style="color: #dc3545; font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">{{ project_report.status_counts.rejected }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1rem; background: rgba(255,69,0,0.1); border-radius: 8px;">
+                        <div style="color: #ff4500; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 1px;">Rolled Back</div>
+                        <div style="color: #ff4500; font-size: 1.8rem; font-weight: 700; margin-top: 0.25rem;">{{ project_report.status_counts.rolled_back }}</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Priority Distribution -->
+            <div class="card">
+                <h3 style="color: var(--silver); font-size: 1.2rem; margin-bottom: 1.5rem; font-weight: 600; border-bottom: 2px solid var(--grey); padding-bottom: 0.75rem;">Priority Levels</h3>
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                    <div style="text-align: center; padding: 1.5rem; background: rgba(220,53,69,0.1); border-radius: 8px; border: 1px solid rgba(220,53,69,0.3);">
+                        <div style="color: #dc3545; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Critical</div>
+                        <div style="color: #dc3545; font-size: 2.5rem; font-weight: 700; margin-top: 0.5rem;">{{ project_report.priority_counts.critical }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1.5rem; background: rgba(255,193,7,0.1); border-radius: 8px; border: 1px solid rgba(255,193,7,0.3);">
+                        <div style="color: #ffc107; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">High</div>
+                        <div style="color: #ffc107; font-size: 2.5rem; font-weight: 700; margin-top: 0.5rem;">{{ project_report.priority_counts.high }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1.5rem; background: rgba(0,123,255,0.1); border-radius: 8px; border: 1px solid rgba(0,123,255,0.3);">
+                        <div style="color: #007bff; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Medium</div>
+                        <div style="color: #007bff; font-size: 2.5rem; font-weight: 700; margin-top: 0.5rem;">{{ project_report.priority_counts.medium }}</div>
+                    </div>
+                    <div style="text-align: center; padding: 1.5rem; background: rgba(40,167,69,0.1); border-radius: 8px; border: 1px solid rgba(40,167,69,0.3);">
+                        <div style="color: #28a745; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Low</div>
+                        <div style="color: #28a745; font-size: 2.5rem; font-weight: 700; margin-top: 0.5rem;">{{ project_report.priority_counts.low }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Team Member Performance -->
+        <div class="card" style="margin-bottom: 2rem;">
+            <h3 style="color: var(--silver); font-size: 1.2rem; margin-bottom: 1.5rem; font-weight: 600; border-bottom: 2px solid var(--grey); padding-bottom: 0.75rem;">Team Performance Analysis</h3>
+            {% if project_report.member_performance %}
+            <div style="overflow-x: auto;">
+                <table style="width: 100%; border-collapse: collapse;">
+                    <thead>
+                        <tr style="background: rgba(255,255,255,0.03); border-bottom: 2px solid var(--grey);">
+                            <th style="padding: 1rem; text-align: left; font-weight: 600; color: var(--silver); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Member</th>
+                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--silver); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Role</th>
+                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--silver); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Created</th>
+                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--silver); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Approved</th>
+                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--silver); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Implemented</th>
+                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--silver); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Avg Time</th>
+                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--silver); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">Approval Rate</th>
+                            <th style="padding: 1rem; text-align: center; font-weight: 600; color: var(--silver); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.5px;">SLA Breaches</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for member in project_report.member_performance %}
+                        <tr style="border-bottom: 1px solid rgba(255,255,255,0.05); transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.02)'" onmouseout="this.style.background='transparent'">
+                            <td style="padding: 1rem;">
+                                <div style="display: flex; flex-direction: column;">
+                                    <span style="color: var(--silver); font-weight: 600; font-size: 0.95rem;">{{ member.user.full_name }}</span>
+                                    <span style="color: var(--grey); font-size: 0.85rem; margin-top: 0.25rem;">{{ member.user.email }}</span>
+                                </div>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span class="badge badge-secondary" style="font-size: 0.85rem; padding: 0.4rem 0.8rem;">{{ member.role }}</span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span style="color: var(--silver); font-weight: 600; font-size: 1.1rem;">{{ member.crs_created }}</span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span style="color: var(--silver); font-weight: 600; font-size: 1.1rem;">{{ member.crs_approved }}</span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span style="color: var(--silver); font-weight: 600; font-size: 1.1rem;">{{ member.crs_implemented }}</span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span style="color: {% if member.avg_resolution_time %}#17a2b8{% else %}var(--grey){% endif %}; font-weight: 500; font-size: 0.9rem;">
+                                    {{ member.avg_resolution_time or 'N/A' }}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                <span style="color: {% if member.approval_rate %}#28a745{% else %}var(--grey){% endif %}; font-weight: 500; font-size: 0.9rem;">
+                                    {{ member.approval_rate or 'N/A' }}
+                                </span>
+                            </td>
+                            <td style="padding: 1rem; text-align: center;">
+                                {% if member.sla_breached > 0 %}
+                                <span style="background: rgba(220,53,69,0.2); color: #dc3545; padding: 0.4rem 0.8rem; border-radius: 4px; font-weight: 700; font-size: 1rem;">
+                                    {{ member.sla_breached }}
+                                </span>
+                                {% else %}
+                                <span style="background: rgba(40,167,69,0.2); color: #28a745; padding: 0.4rem 0.8rem; border-radius: 4px; font-weight: 700; font-size: 1rem;">
+                                    0
+                                </span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p style="color: var(--grey); text-align: center; padding: 3rem; font-style: italic;">No team members assigned to this project</p>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- All Projects Summary -->
+    <div class="card">
+        <h2 style="color: var(--silver); font-size: 1.25rem; margin-bottom: 1rem;">All Projects Summary</h2>
+        {% if project_summaries %}
+        <div style="overflow-x: auto;">
+            <table style="width: 100%;">
+                <thead>
+                    <tr>
+                        <th>Project</th>
+                        <th style="text-align: center;">Total CRs</th>
+                        <th style="text-align: center;">Pending</th>
+                        <th style="text-align: center;">Closed</th>
+                        <th style="text-align: center;">Members</th>
+                        <th style="text-align: center;">SLA Breached</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for summary in project_summaries %}
+                    <tr>
+                        <td style="color: var(--silver);">
+                            <strong>{{ summary.project.name }}</strong><br>
+                            <small style="color: var(--grey);">{{ summary.project.code }}</small>
+                        </td>
+                        <td style="text-align: center; color: var(--silver); font-size: 1.1rem;">{{ summary.total_crs }}</td>
+                        <td style="text-align: center; color: #ffc107; font-size: 1.1rem;">{{ summary.pending_crs }}</td>
+                        <td style="text-align: center; color: #28a745; font-size: 1.1rem;">{{ summary.closed_crs }}</td>
+                        <td style="text-align: center; color: var(--silver); font-size: 1.1rem;">{{ summary.members }}</td>
+                        <td style="text-align: center;">
+                            {% if summary.sla_breached > 0 %}
+                            <span style="color: #dc3545; font-weight: bold;">{{ summary.sla_breached }}</span>
+                            {% else %}
+                            <span style="color: #28a745;">0</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: center;">
+                            <a href="{{ url_for('admin.reports', project_id=summary.project.id) }}" class="btn btn-primary btn-sm">View Details</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: var(--grey); text-align: center; padding: 2rem;">No projects found</p>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+    /* Print Stylesheet */
+    @media print {
+        /* Hide elements not needed for print */
+        .navbar, .sidebar, nav, header, footer,
+        .no-print, button, select, input,
+        .btn, .card:first-child {
+            display: none !important;
+        }
+
+        /* Optimize layout for printing */
+        body {
+            background: white !important;
+            color: black !important;
+            font-size: 10pt;
+        }
+
+        .container {
+            width: 100% !important;
+            max-width: none !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+
+        .card {
+            border: 1px solid #ddd !important;
+            box-shadow: none !important;
+            page-break-inside: avoid;
+            margin-bottom: 15px !important;
+            background: white !important;
+            padding: 15px !important;
+        }
+
+        h1, h2, h3 {
+            color: black !important;
+            page-break-after: avoid;
+        }
+
+        table {
+            page-break-inside: auto;
+            border-collapse: collapse !important;
+        }
+
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
+        }
+
+        thead {
+            display: table-header-group;
+        }
+
+        tfoot {
+            display: table-footer-group;
+        }
+
+        /* Override inline styles for print */
+        * {
+            color: black !important;
+            background: white !important;
+            border-color: #ddd !important;
+        }
+
+        .metric-card, .status-card, .priority-card {
+            border: 1px solid #ddd !important;
+        }
+
+        /* Ensure good contrast for print */
+        .badge {
+            border: 1px solid black !important;
+        }
+    }
+</style>
+
+<script>
+    // Function to generate and download PDF
+    function generatePDF() {
+        // Get the selected project ID from the URL or select element
+        const urlParams = new URLSearchParams(window.location.search);
+        const projectId = urlParams.get('project_id');
+        
+        if (!projectId) {
+            alert('Please select a project first');
+            return;
+        }
+        
+        // Redirect to PDF export endpoint
+        window.location.href = '{{ url_for("admin.export_report_pdf") }}?project_id=' + projectId;
+    }
+
+    // Optional: Auto-refresh when project is selected
+    const projectSelect = document.getElementById('project-select');
+    if (projectSelect) {
+        projectSelect.addEventListener('change', function() {
+            if (this.value) {
+                window.location.href = '{{ url_for("admin.reports") }}?project_id=' + this.value;
+            }
+        });
+    }
+</script>
+
+{% endblock %}

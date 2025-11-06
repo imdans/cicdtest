@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Projects - Admin{% endblock %}
+
+{% block content %}
+<div style="max-width: 1400px; margin: 0 auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <h1 class="card-header">Projects</h1>
+        <a href="{{ url_for('admin.create_project') }}" class="btn btn-primary">Create New Project</a>
+    </div>
+    
+    {% if projects %}
+    <div class="card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Code</th>
+                    <th>Name</th>
+                    <th>Description</th>
+                    <th>Status</th>
+                    <th>Members</th>
+                    <th>Change Requests</th>
+                    <th>Created</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for project in projects %}
+                <tr>
+                    <td><strong>{{ project.code }}</strong></td>
+                    <td>{{ project.name }}</td>
+                    <td>{{ project.description[:50] }}{% if project.description|length > 50 %}...{% endif %}</td>
+                    <td>
+                        <span class="badge badge-{{ 'success' if project.is_active else 'secondary' }}">
+                            {{ 'Active' if project.is_active else 'Inactive' }}
+                        </span>
+                    </td>
+                    <td>{{ project.members|length }}</td>
+                    <td>{{ project.change_requests|length }}</td>
+                    <td>{{ project.created_at | to_ist }}</td>
+                    <td>
+                        <a href="{{ url_for('admin.project_detail', project_id=project.id) }}" class="btn btn-sm btn-info">View Details</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="card" style="text-align: center; padding: 3rem;">
+        <p style="color: var(--silver); font-size: 1.1rem; margin: 0;">No projects yet.</p>
+        <a href="{{ url_for('admin.create_project') }}" class="btn btn-primary" style="margin-top: 1.5rem;">Create Your First Project</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

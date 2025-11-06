@@ -1,0 +1,122 @@
+{% extends 'base.html' %}
+{% block title %}Users - Admin{% endblock %}
+
+{% block content %}
+<div class="admin-users">
+    <h2>Users Management</h2>
+    
+    <div style="margin-bottom: 20px;">
+        <a href="{{ url_for('admin.create_user') }}" class="btn btn-primary">Create New User</a>
+        <a href="{{ url_for('admin.dashboard') }}" class="btn btn-secondary">Back to Dashboard</a>
+    </div>
+    
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Name</th>
+                <th>Role</th>
+                <th>Status</th>
+                <th>Invitation</th>
+                <th>Projects</th>
+                <th>Last Login</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for user in users %}
+            <tr>
+                <td>{{ user.email }}</td>
+                <td>{{ user.first_name }} {{ user.last_name }}</td>
+                <td>{{ user.role.name|title }}</td>
+                <td>
+                    {% if user.is_active %}
+                    <span class="badge badge-success">Active</span>
+                    {% else %}
+                    <span class="badge badge-secondary">Inactive</span>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.invitation %}
+                        {% if user.invitation.is_accepted %}
+                        <span class="badge badge-success">Accepted</span>
+                        {% elif user.invitation.is_valid() %}
+                        <span class="badge badge-warning">Pending</span>
+                        {% else %}
+                        <span class="badge badge-danger">Expired</span>
+                        {% endif %}
+                    {% else %}
+                    <span class="badge badge-secondary">N/A</span>
+                    {% endif %}
+                </td>
+                <td>{{ user.project_memberships|length }}</td>
+                <td>{{ user.last_login | to_ist if user.last_login else 'Never' }}</td>
+                <td>
+                    {% if user.id != current_user.id %}
+                    <button type="button" class="btn btn-danger btn-sm" onclick="deleteUser({{ user.id }}, '{{ user.email }}')">
+                        Delete
+                    </button>
+                    {% else %}
+                    <span style="color: var(--silver); font-size: 0.9rem;">You</span>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Delete User Modal -->
+<div id="deleteUserModal" class="modal">
+    <div class="modal-content">
+        <h3 style="margin-top: 0; color: var(--silver);">Delete User</h3>
+        <p style="margin: 1.5rem 0;">
+            Are you sure you want to delete user <strong id="deleteUserEmail"></strong>?
+        </p>
+        <div class="alert alert-warning" style="margin: 1.5rem 0;">
+            <strong>Note:</strong> This action cannot be undone. All user data, including their change requests and project memberships, will be permanently deleted.
+        </div>
+        
+        <form id="deleteUserForm" method="POST" style="margin-top: 20px;">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+                <label for="admin_password" style="font-weight: bold;">Enter Your Admin Password to Confirm:</label>
+                <input type="password" 
+                       id="admin_password" 
+                       name="admin_password" 
+                       class="form-control" 
+                       required
+                       placeholder="Your password"
+                       style="margin-top: 10px;">
+            </div>
+            
+            <div style="margin-top: 20px; display: flex; gap: 10px; justify-content: flex-end;">
+                <button type="button" class="btn btn-secondary" onclick="closeDeleteModal()">Cancel</button>
+                <button type="submit" class="btn btn-danger">Delete User</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function deleteUser(userId, userEmail) {
+    document.getElementById('deleteUserEmail').textContent = userEmail;
+    document.getElementById('deleteUserForm').action = '/admin/users/' + userId + '/delete';
+    document.getElementById('deleteUserModal').style.display = 'flex';
+    document.getElementById('admin_password').value = '';
+    document.getElementById('admin_password').focus();
+}
+
+function closeDeleteModal() {
+    document.getElementById('deleteUserModal').style.display = 'none';
+}
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(event) {
+    if (event.key === 'Escape') {
+        closeDeleteModal();
+    }
+});
+</script>
+
+{% endblock %}

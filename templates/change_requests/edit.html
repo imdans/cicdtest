@@ -1,0 +1,100 @@
+{% extends 'base.html' %}
+{% block title %}Edit CR #{{ cr.cr_number }} - CMS{% endblock %}
+
+{% block content %}
+<div style="max-width: 900px; margin: 0 auto;">
+    <h1 class="card-header" style="margin-bottom: 2rem;">Edit Change Request #{{ cr.cr_number }}</h1>
+    
+    <div class="card">
+    <form method="POST" action="{{ url_for('cr.edit', cr_id=cr.id) }}" enctype="multipart/form-data">
+        {{ form.hidden_tag() }}
+        
+        <div class="form-group">
+            {{ form.title.label }}
+            {{ form.title(class="form-control") }}
+            {% if form.title.errors %}
+                <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                    {% for error in form.title.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.description.label }}
+            {{ form.description(class="form-control", rows=5) }}
+            {% if form.description.errors %}
+                <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                    {% for error in form.description.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.justification.label }}
+            {{ form.justification(class="form-control", rows=3) }}
+            {% if form.justification.errors %}
+                <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                    {% for error in form.justification.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.impact_assessment.label }}
+            {{ form.impact_assessment(class="form-control", rows=3) }}
+            {% if form.impact_assessment.errors %}
+                <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                    {% for error in form.impact_assessment.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.priority.label }}
+            {{ form.priority(class="form-control") }}
+            {% if form.priority.errors %}
+                <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                    {% for error in form.priority.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.risk_level.label }}
+            {{ form.risk_level(class="form-control") }}
+            {% if form.risk_level.errors %}
+                <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                    {% for error in form.risk_level.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.rollback_plan.label }}
+            {{ form.rollback_plan(class="form-control", rows=3) }}
+            {% if form.rollback_plan.errors %}
+                <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                    {% for error in form.rollback_plan.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="form-group">
+            {{ form.attachments.label }}
+            {{ form.attachments(class="form-control") }}
+            {% if form.attachments.errors %}
+                <div class="alert alert-danger" style="margin-top: 0.5rem;">
+                    {% for error in form.attachments.errors %}{{ error }}{% endfor %}
+                </div>
+            {% endif %}
+            <small style="color: var(--silver);">Allowed formats: txt, pdf, doc, docx, xls, xlsx, png, jpg, jpeg</small>
+        </div>
+        
+        <div style="display: flex; gap: 1rem; margin-top: 2rem;">
+            {{ form.submit(class="btn btn-primary") }}
+            <a href="{{ url_for('cr.view', cr_id=cr.id) }}" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+    </div>
+</div>
+{% endblock %}
